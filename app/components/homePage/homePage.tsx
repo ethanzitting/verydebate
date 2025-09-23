@@ -18,13 +18,15 @@ export const HomePage: FC = () => {
   const { caption } = useAudioTranscriptionHandler();
 
   return (
-    <div className="h-full w-full bg-amber-50">
-      {caption && <span className="bg-black/70 p-8">{caption}</span>}
-      {microphoneState !== MicrophoneState.Ready ? (
+    <div className="h-full w-full bg-amber-50 flex flex-col gap-6">
+      <span>Mic status: {microphoneState}</span>
+      {microphoneState !== MicrophoneState.Ready &&
+      microphoneState !== MicrophoneState.Open ? (
         <Button onClick={startMicrophone}>Start Mic</Button>
       ) : (
         <Button onClick={stopMicrophone}>Stop Mic</Button>
       )}
+      {caption && <span className="p-8">{caption}</span>}
     </div>
   );
 };
