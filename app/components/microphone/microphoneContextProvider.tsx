@@ -10,6 +10,7 @@ import {
   useState,
 } from "react";
 import { MicrophoneState } from "@/app/components/microphone/typesAndConstants";
+import { unimplementedFunction } from "@/app/components/unimplementedFunction";
 
 interface MicrophoneContext {
   microphone: MediaRecorder | null;
@@ -21,9 +22,9 @@ interface MicrophoneContext {
 
 const defaultMicrophoneContext: MicrophoneContext = {
   microphone: null,
-  startMicrophone: () => {},
-  stopMicrophone: () => {},
-  setupMicrophone: () => {},
+  startMicrophone: unimplementedFunction,
+  stopMicrophone: unimplementedFunction,
+  setupMicrophone: unimplementedFunction,
   microphoneState: null,
 };
 
