@@ -20,8 +20,7 @@ export const HomePage: FC = () => {
   return (
     <div className="h-full w-full bg-amber-50 flex flex-col gap-6">
       <span>Mic status: {microphoneState}</span>
-      {microphoneState !== MicrophoneState.Ready &&
-      microphoneState !== MicrophoneState.Open ? (
+      {microphoneState !== MicrophoneState.Ready ? (
         <Button onClick={startMicrophone}>Start Mic</Button>
       ) : (
         <Button onClick={stopMicrophone}>Stop Mic</Button>

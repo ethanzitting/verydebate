@@ -18,6 +18,7 @@ import {
   useState,
 } from "react";
 import { getToken } from "@/app/components/transcription/utils";
+import { unimplementedFunction } from "@/app/components/unimplementedFunction";
 
 interface DeepgramContextType {
   connection: LiveClient | null;
@@ -28,8 +29,8 @@ interface DeepgramContextType {
 
 const defaultDeepgramContext: DeepgramContextType = {
   connection: null,
-  connectToDeepgram: async () => {},
-  disconnectFromDeepgram: () => {},
+  connectToDeepgram: unimplementedFunction,
+  disconnectFromDeepgram: unimplementedFunction,
   connectionState: LiveConnectionState.CLOSED,
 };
 

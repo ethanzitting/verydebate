@@ -16,7 +16,6 @@ interface MicrophoneContext {
   microphone: MediaRecorder | null;
   startMicrophone: () => void;
   stopMicrophone: () => void;
-  setupMicrophone: () => void;
   microphoneState: MicrophoneState | null;
 }
 
@@ -24,7 +23,6 @@ const defaultMicrophoneContext: MicrophoneContext = {
   microphone: null,
   startMicrophone: unimplementedFunction,
   stopMicrophone: unimplementedFunction,
-  setupMicrophone: unimplementedFunction,
   microphoneState: null,
 };
 
@@ -48,18 +46,18 @@ export const MicrophoneContextProvider: FC<PropsWithChildren> = ({
     setMicrophoneState(MicrophoneState.SettingUp);
 
     try {
-      const userMedia = await navigator.mediaDevices.getUserMedia({
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
         audio: {
           noiseSuppression: true,
           echoCancellation: true,
         },
       });
 
-      const microphone = new MediaRecorder(userMedia);
+      const mediaRecorder = new MediaRecorder(mediaStream);
 
       setMicrophoneState(MicrophoneState.Ready);
-      setMicrophone(microphone);
-      console.log("microphone setup complete", microphone);
+      setMicrophone(mediaRecorder);
+      console.log("microphone setup complete", mediaRecorder);
     } catch (err: any) {
       setMicrophoneState(MicrophoneState.Error);
       console.error(err);
@@ -69,15 +67,22 @@ export const MicrophoneContextProvider: FC<PropsWithChildren> = ({
   }, []);
 
   const stopMicrophone = useCallback(() => {
+    if (!microphone) return;
+
     setMicrophoneState(MicrophoneState.Pausing);
 
-    if (microphone?.state === "recording") {
+    if (microphone.state === "recording") {
       microphone.pause();
       setMicrophoneState(MicrophoneState.Paused);
     }
   }, [microphone]);
 
-  const startMicrophone = useCallback(() => {
+  const startMicrophone = useCallback(async () => {
+    if (microphoneState !== MicrophoneState.Paused) {
+      await setupMicrophone();
+      return;
+    }
+
     setMicrophoneState(MicrophoneState.Opening);
 
     if (microphone?.state === "paused") {
@@ -89,21 +94,14 @@ export const MicrophoneContextProvider: FC<PropsWithChildren> = ({
     setMicrophoneState(MicrophoneState.Open);
   }, [microphone]);
 
-  const value = useMemo(() => {
+  const value: MicrophoneContext = useMemo(() => {
     return {
       microphone,
       startMicrophone,
       stopMicrophone,
-      setupMicrophone,
       microphoneState,
     };
-  }, [
-    microphone,
-    startMicrophone,
-    stopMicrophone,
-    setupMicrophone,
-    microphoneState,
-  ]);
+  }, [microphone, startMicrophone, stopMicrophone, microphoneState]);
 
   return (
     <microphoneContext.Provider value={value}>
