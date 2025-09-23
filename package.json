@@ -9,7 +9,9 @@
   },
   "dependencies": {
     "@deepgram/sdk": "^4.5.1",
+    "eslint": "^9.36.0",
     "next": "15.5.3",
+    "prettier": "^3.6.2",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "tailwind-merge": "^3.3.1"
