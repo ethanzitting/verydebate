@@ -1,58 +1,27 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useDeepgramContext } from "./deepgramContextProvider";
-import { useMicrophoneContext } from "../microphone/microphoneContextProvider";
 import {
   LiveConnectionState,
   LiveTranscriptionEvent,
   LiveTranscriptionEvents,
 } from "@deepgram/sdk";
-import { MicrophoneEvents } from "@/app/components/microphone/typesAndConstants";
+import { useFixIosSafariBugDataAvailableListener } from "@/app/components/microphone/useFixIosSafariBugDataAvailableListener";
 
 export const useAudioTranscriptionHandler = () => {
   const { connection, connectionState } = useDeepgramContext();
-  const { microphone, startMicrophone } = useMicrophoneContext();
 
   const [caption, setCaption] = useState<string | undefined>(
     "Powered by Deepgram",
   );
-  const captionTimeout = useRef<any>(null);
+  const captionTimeout = useRef<NodeJS.Timeout | undefined>(undefined);
 
-  const fixIosSafariBug = useCallback(
-    (e: BlobEvent) => {
-      if (!microphone) return;
-      if (!connection) return;
-      if (connectionState !== LiveConnectionState.OPEN) return;
-
-      // iOS SAFARI FIX:
-      // Prevent packetZero from being sent. If sent at size 0, the connection will close.
-      if (e.data.size > 0) {
-        connection?.send(e.data);
-      }
-    },
-    [connection, connectionState, microphone],
-  );
-
-  useEffect(() => {
-    if (!microphone) return;
-
-    microphone.addEventListener(
-      MicrophoneEvents.DataAvailable,
-      fixIosSafariBug,
-    );
-
-    return () => {
-      microphone.removeEventListener(
-        MicrophoneEvents.DataAvailable,
-        fixIosSafariBug,
-      );
-    };
-  });
+  useFixIosSafariBugDataAvailableListener();
 
   const handleTranscriptTextStream = useCallback(
     (data: LiveTranscriptionEvent) => {
       console.log("Transcript event", data);
       const { is_final: isFinal, speech_final: speechFinal } = data;
-      let thisCaption = data.channel.alternatives[0].transcript;
+      const thisCaption = data.channel.alternatives[0].transcript;
 
       console.log("thisCaption", thisCaption);
       if (thisCaption !== "") {
@@ -79,8 +48,6 @@ export const useAudioTranscriptionHandler = () => {
         LiveTranscriptionEvents.Transcript,
         handleTranscriptTextStream,
       );
-
-      startMicrophone();
     }
 
     return () => {
@@ -90,12 +57,7 @@ export const useAudioTranscriptionHandler = () => {
       );
       clearTimeout(captionTimeout.current);
     };
-  }, [
-    connection,
-    connectionState,
-    handleTranscriptTextStream,
-    startMicrophone,
-  ]);
+  }, [connection, connectionState, handleTranscriptTextStream]);
 
   return { caption };
 };
