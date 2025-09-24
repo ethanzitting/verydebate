@@ -1,6 +1,6 @@
 "use client";
 
-import {
+import React, {
   createContext,
   FC,
   PropsWithChildren,
@@ -42,7 +42,7 @@ export const MicrophoneContextProvider: FC<PropsWithChildren> = ({
   );
   const [microphone, setMicrophone] = useState<MediaRecorder | null>(null);
 
-  const setupMicrophone = useCallback(async () => {
+  const initializeMicrophone = useCallback(async () => {
     setMicrophoneState(MicrophoneState.SettingUp);
 
     try {
@@ -57,7 +57,6 @@ export const MicrophoneContextProvider: FC<PropsWithChildren> = ({
 
       setMicrophoneState(MicrophoneState.Ready);
       setMicrophone(mediaRecorder);
-      console.log("microphone setup complete", mediaRecorder);
     } catch (err: any) {
       setMicrophoneState(MicrophoneState.Error);
       console.error(err);
@@ -66,7 +65,7 @@ export const MicrophoneContextProvider: FC<PropsWithChildren> = ({
     }
   }, []);
 
-  const stopMicrophone = useCallback(() => {
+  const pauseMicrophone = useCallback(() => {
     if (!microphone) return;
 
     setMicrophoneState(MicrophoneState.Pausing);
@@ -75,33 +74,33 @@ export const MicrophoneContextProvider: FC<PropsWithChildren> = ({
       microphone.pause();
       setMicrophoneState(MicrophoneState.Paused);
     }
-  }, [microphone]);
+  }, []);
 
-  const startMicrophone = useCallback(async () => {
-    if (microphoneState !== MicrophoneState.Paused) {
-      await setupMicrophone();
-      return;
-    }
+  const resumeMicrophone = useCallback(() => {
+    if (!microphone) return;
 
     setMicrophoneState(MicrophoneState.Opening);
 
-    if (microphone?.state === "paused") {
-      microphone.resume();
-    } else {
-      microphone?.start(250);
-    }
-
+    microphone.resume();
     setMicrophoneState(MicrophoneState.Open);
+  }, []);
+
+  const startMicrophone = useCallback(async () => {
+    if (microphoneState !== MicrophoneState.Paused) {
+      await initializeMicrophone();
+    } else {
+      resumeMicrophone();
+    }
   }, [microphone]);
 
   const value: MicrophoneContext = useMemo(() => {
     return {
       microphone,
       startMicrophone,
-      stopMicrophone,
+      stopMicrophone: pauseMicrophone,
       microphoneState,
     };
-  }, [microphone, startMicrophone, stopMicrophone, microphoneState]);
+  }, []);
 
   return (
     <microphoneContext.Provider value={value}>
