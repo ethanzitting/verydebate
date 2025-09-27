@@ -1,8 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import { MicrophoneContextProvider } from './components/microphone/microphoneContextProvider';
-import { DeepgramContextProvider } from './components/transcription/deepgramContextProvider';
 import { FontAwesomeInstallScript } from '@/app/components/fontawesome/fontAwesomeScript';
+import { ProviderPyramid } from '@/app/components/providerPyramid';
 
 export const metadata: Metadata = {
   title: 'Create Next App',
@@ -21,9 +20,7 @@ export default function RootLayout({
         <FontAwesomeInstallScript />
       </head>
       <body className={`antialiased`}>
-        <MicrophoneContextProvider>
-          <DeepgramContextProvider>{children}</DeepgramContextProvider>
-        </MicrophoneContextProvider>
+        <ProviderPyramid>{children}</ProviderPyramid>
       </body>
     </html>
   );
