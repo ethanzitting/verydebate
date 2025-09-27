@@ -1,17 +1,12 @@
-"use client";
+'use client';
 
-import { FC } from "react";
-import { useMicrophoneContext } from "../microphone/microphoneContextProvider";
-import { useAudioTranscriptionHandler } from "../transcription/useAudioTranscriptionHandler";
-import { useConnectToDeepgramOnMicrophoneReady } from "../transcription/useConnectToDeepgramOnMicrophoneReady";
-import { useKeepConnectionLive } from "../transcription/useKeepConnectionAlive";
-import { Button } from "@/app/components/button";
-import { MicrophoneState } from "@/app/components/microphone/typesAndConstants";
+import { FC } from 'react';
+import { useAudioTranscriptionHandler } from '../transcription/useAudioTranscriptionHandler';
+import { useConnectToDeepgramOnMicrophoneReady } from '../transcription/useConnectToDeepgramOnMicrophoneReady';
+import { useKeepConnectionLive } from '../transcription/useKeepConnectionAlive';
+import { MicControlButton } from '@/app/components/microphone/micControlButton';
 
 export const HomePage: FC = () => {
-  const { microphoneState, startMicrophone, stopMicrophone } =
-    useMicrophoneContext();
-
   useConnectToDeepgramOnMicrophoneReady();
   useKeepConnectionLive();
 
@@ -19,12 +14,7 @@ export const HomePage: FC = () => {
 
   return (
     <div className="h-full w-full bg-amber-50 flex flex-col gap-6">
-      <span>Mic status: {microphoneState}</span>
-      {microphoneState !== MicrophoneState.Ready ? (
-        <Button onClick={startMicrophone}>Start Mic</Button>
-      ) : (
-        <Button onClick={stopMicrophone}>Stop Mic</Button>
-      )}
+      <MicControlButton />
       {caption && <span className="p-8">{caption}</span>}
     </div>
   );
