@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, {
   createContext,
@@ -8,9 +8,9 @@ import React, {
   useContext,
   useMemo,
   useState,
-} from "react";
-import { MicrophoneState } from "@/app/components/microphone/typesAndConstants";
-import { unimplementedFunction } from "@/app/components/unimplementedFunction";
+} from 'react';
+import { MicrophoneState } from '@/app/components/microphone/typesAndConstants';
+import { unimplementedFunction } from '@/app/components/unimplementedFunction';
 
 interface MicrophoneContext {
   microphone: MediaRecorder | null;
@@ -27,7 +27,7 @@ const defaultMicrophoneContext: MicrophoneContext = {
 };
 
 const microphoneContext = createContext<MicrophoneContext>(
-  defaultMicrophoneContext,
+  defaultMicrophoneContext
 );
 
 export function useMicrophoneContext(): MicrophoneContext {
@@ -38,7 +38,7 @@ export const MicrophoneContextProvider: FC<PropsWithChildren> = ({
   children = undefined,
 }) => {
   const [microphoneState, setMicrophoneState] = useState<MicrophoneState>(
-    MicrophoneState.NotSetup,
+    MicrophoneState.NotSetup
   );
   const [microphone, setMicrophone] = useState<MediaRecorder | null>(null);
 
@@ -70,7 +70,7 @@ export const MicrophoneContextProvider: FC<PropsWithChildren> = ({
 
     setMicrophoneState(MicrophoneState.Pausing);
 
-    if (microphone.state === "recording") {
+    if (microphone.state === 'recording') {
       microphone.pause();
       setMicrophoneState(MicrophoneState.Paused);
     }
@@ -100,7 +100,7 @@ export const MicrophoneContextProvider: FC<PropsWithChildren> = ({
       stopMicrophone: pauseMicrophone,
       microphoneState,
     };
-  }, []);
+  }, [microphone, startMicrophone, pauseMicrophone, microphoneState]);
 
   return (
     <microphoneContext.Provider value={value}>
