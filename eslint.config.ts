@@ -8,8 +8,17 @@ export default defineConfig([
   {
     files: ["**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
     plugins: { js },
-    extends: ["js/recommended"],
+    extends: [
+      "js/recommended",
+      "plugin:@next/next/recommended",
+      "airbnb",
+      "prettier",
+    ],
     languageOptions: { globals: globals.browser },
+    rules: {
+      "react/react-in-jsx-scope": "off",
+      "@typescript-eslint/no-unused-vars": "off",
+    },
   },
   tseslint.configs.recommended,
   pluginReact.configs.flat.recommended,
