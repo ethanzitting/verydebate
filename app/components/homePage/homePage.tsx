@@ -1,11 +1,11 @@
 'use client';
 
 import { FC } from 'react';
-import { useAudioTranscriptionHandler } from '../transcription/useAudioTranscriptionHandler';
+import { useAccessTranscriptStream } from '../transcription/useAccessTranscriptStream';
 import { MicControlButton } from '@/app/components/microphone/micControlButton';
 
 export const HomePage: FC = () => {
-  const { paragraphs, currentParagraph } = useAudioTranscriptionHandler();
+  const { paragraphs, currentParagraph } = useAccessTranscriptStream();
 
   return (
     <div className="h-full w-full items-center justify-center bg-amber-50 flex flex-col gap-6">
