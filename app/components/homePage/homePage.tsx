@@ -5,12 +5,17 @@ import { useAudioTranscriptionHandler } from '../transcription/useAudioTranscrip
 import { MicControlButton } from '@/app/components/microphone/micControlButton';
 
 export const HomePage: FC = () => {
-  const { caption } = useAudioTranscriptionHandler();
+  const { paragraphs, currentParagraph } = useAudioTranscriptionHandler();
 
   return (
-    <div className="h-full w-full bg-amber-50 flex flex-col gap-6">
+    <div className="h-full w-full items-center justify-center bg-amber-50 flex flex-col gap-6">
       <MicControlButton />
-      {caption && <span className="p-8">{caption}</span>}
+      {paragraphs.map((paragraph, index) => (
+        <div className="p-8" key={index}>
+          {paragraph}
+        </div>
+      ))}
+      <div className="p-8">{currentParagraph}</div>
     </div>
   );
 };

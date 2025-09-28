@@ -15,12 +15,12 @@ export default function RootLayout({
   children: ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="h-screen w-screen">
       <head>
         <title>Very Debate</title>
         <FontAwesomeInstallScript />
       </head>
-      <body className={`antialiased`}>
+      <body className="antialiased h-full w-full">
         <ProviderPyramid>{children}</ProviderPyramid>
       </body>
     </html>

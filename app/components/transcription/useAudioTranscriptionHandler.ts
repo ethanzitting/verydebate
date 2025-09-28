@@ -10,9 +10,10 @@ import { useFixIosSafariBugDataAvailableListener } from '@/app/components/microp
 export const useAudioTranscriptionHandler = () => {
   const { connection, connectionState } = useDeepgramContext();
 
-  const [caption, setCaption] = useState<string | undefined>(
-    'Powered by Deepgram'
-  );
+  const [paragraphs, setParagraphs] = useState<string[]>([]);
+
+  const currentParagraphRef = useRef<string>('');
+
   const captionTimeout = useRef<NodeJS.Timeout | undefined>(undefined);
 
   useFixIosSafariBugDataAvailableListener();
@@ -25,14 +26,16 @@ export const useAudioTranscriptionHandler = () => {
 
       console.log('thisCaption', thisCaption);
       if (thisCaption !== '') {
-        console.log('thisCaption !== ""', thisCaption);
-        setCaption(thisCaption);
+        currentParagraphRef.current =
+          currentParagraphRef.current + ' ' + thisCaption;
       }
 
       if (isFinal && speechFinal) {
         clearTimeout(captionTimeout.current);
         captionTimeout.current = setTimeout(() => {
-          setCaption(undefined);
+          console.log('currentParagraphRef', currentParagraphRef.current);
+          setParagraphs((prev) => [...prev, currentParagraphRef.current]);
+          currentParagraphRef.current = '';
           clearTimeout(captionTimeout.current);
         }, 3000);
       }
@@ -59,5 +62,5 @@ export const useAudioTranscriptionHandler = () => {
     };
   }, [connection, connectionState, handleTranscriptTextStream]);
 
-  return { caption };
+  return { paragraphs, currentParagraph: currentParagraphRef.current };
 };
