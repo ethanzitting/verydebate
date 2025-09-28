@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { FontAwesomeInstallScript } from '@/app/components/fontawesome/fontAwesomeScript';
 import { ProviderPyramid } from '@/app/components/providerPyramid';
+import { ReactNode } from 'react';
 
 export const metadata: Metadata = {
   title: 'Create Next App',
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: ReactNode;
 }>) {
   return (
     <html lang="en">

@@ -3,7 +3,7 @@ import { DeepgramContextProvider } from '@/app/components/transcription/deepgram
 import { MicrophoneContextProvider } from '@/app/components/microphone/microphoneContextProvider';
 
 export const ProviderPyramid: FC<PropsWithChildren> = ({
-  children = undefined,
+  children,
 }) => {
   return (
     <MicrophoneContextProvider>

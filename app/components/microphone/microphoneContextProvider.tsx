@@ -35,7 +35,7 @@ export function useMicrophoneContext(): MicrophoneContext {
 }
 
 export const MicrophoneContextProvider: FC<PropsWithChildren> = ({
-  children = undefined,
+  children,
 }) => {
   const [microphoneState, setMicrophoneState] = useState<MicrophoneState>(
     MicrophoneState.NotSetup
@@ -57,11 +57,11 @@ export const MicrophoneContextProvider: FC<PropsWithChildren> = ({
 
       setMicrophoneState(MicrophoneState.Ready);
       setMicrophone(mediaRecorder);
-    } catch (err: any) {
+    } catch (error: any) {
       setMicrophoneState(MicrophoneState.Error);
-      console.error(err);
+      console.error(error);
 
-      throw err;
+      throw error;
     }
   }, []);
 
@@ -74,7 +74,7 @@ export const MicrophoneContextProvider: FC<PropsWithChildren> = ({
       microphone.pause();
       setMicrophoneState(MicrophoneState.Paused);
     }
-  }, []);
+  }, [microphone]);
 
   const resumeMicrophone = useCallback(() => {
     if (!microphone) return;
@@ -83,15 +83,15 @@ export const MicrophoneContextProvider: FC<PropsWithChildren> = ({
 
     microphone.resume();
     setMicrophoneState(MicrophoneState.Open);
-  }, []);
+  }, [microphone]);
 
   const startMicrophone = useCallback(async () => {
-    if (microphoneState !== MicrophoneState.Paused) {
-      await initializeMicrophone();
-    } else {
+    if (microphoneState === MicrophoneState.Paused) {
       resumeMicrophone();
+    } else {
+      await initializeMicrophone();
     }
-  }, [microphone]);
+  }, [initializeMicrophone, microphoneState, resumeMicrophone]);
 
   const value: MicrophoneContext = useMemo(() => {
     return {

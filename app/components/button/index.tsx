@@ -11,7 +11,7 @@ type Props = {
 export const Button: FC<Props> = ({
   onClick,
   className = "",
-  onKeyDown = undefined,
+  onKeyDown,
   children,
 }) => {
   return (

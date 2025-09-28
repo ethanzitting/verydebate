@@ -21,7 +21,7 @@ export const useKeepConnectionLive = () => {
 
       keepAliveInterval.current = setInterval(() => {
         connection.keepAlive();
-      }, 10000);
+      }, 10_000);
     } else {
       clearInterval(keepAliveInterval.current);
     }

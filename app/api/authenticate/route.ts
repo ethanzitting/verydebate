@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
   const url = request.url;
   const deepgram = createClient(process.env.DEEPGRAM_API_KEY ?? "");
 
-  let { result: tokenResult, error: tokenError } =
+  const { result: tokenResult, error: tokenError } =
     await deepgram.auth.grantToken();
 
   if (tokenError) {
