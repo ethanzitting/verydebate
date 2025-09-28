@@ -57,6 +57,7 @@ export const useConnectToDeepgramOnMicrophoneReady = () => {
         interim_results: true,
         smart_format: true,
         filler_words: true,
+        diarize: true,
         utterance_end_ms: 3000,
       });
     } else {
