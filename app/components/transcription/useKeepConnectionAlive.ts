@@ -1,21 +1,28 @@
-import { useEffect, useRef } from "react";
-import { useDeepgramContext } from "./deepgramContextProvider";
-import { useMicrophoneContext } from "../microphone/microphoneContextProvider";
-import { MicrophoneState } from "@/app/components/microphone/typesAndConstants";
-import { LiveConnectionState } from "@deepgram/sdk";
+import { useEffect, useRef } from 'react';
+import { useMicrophoneContext } from '../microphone/microphoneContextProvider';
+import { MicrophoneState } from '@/app/components/microphone/typesAndConstants';
+import { SOCKET_STATES } from '@deepgram/sdk';
+import { DeepgramContext } from '@/app/components/transcription/deepgramContextProvider';
 
-export const useKeepConnectionLive = () => {
-  const { connection, connectionState } = useDeepgramContext();
+type Props = {
+  connection: DeepgramContext['connection'];
+  connectionState: DeepgramContext['connectionState'];
+};
+
+export const useKeepConnectionLive = ({
+  connection,
+  connectionState,
+}: Props) => {
   const { microphoneState } = useMicrophoneContext();
 
-  const keepAliveInterval = useRef<any>(null);
+  const keepAliveInterval = useRef<NodeJS.Timeout | undefined>(undefined);
 
   useEffect(() => {
     if (!connection) return;
 
     if (
       microphoneState !== MicrophoneState.Open &&
-      connectionState === LiveConnectionState.OPEN
+      connectionState === SOCKET_STATES.open
     ) {
       connection.keepAlive();
 

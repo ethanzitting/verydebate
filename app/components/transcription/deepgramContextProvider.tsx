@@ -1,44 +1,30 @@
-"use client";
+'use client';
 
-import {
-  createClient,
-  LiveClient,
-  LiveConnectionState,
-  type LiveSchema,
-  LiveTranscriptionEvents,
-} from "@deepgram/sdk";
+import { LiveClient, SOCKET_STATES } from '@deepgram/sdk';
 
 import {
   createContext,
   FunctionComponent,
   ReactNode,
-  useCallback,
   useContext,
   useMemo,
-  useState,
-} from "react";
-import { getToken } from "@/app/components/transcription/utils";
-import { unimplementedFunction } from "@/app/components/unimplementedFunction";
+} from 'react';
+import { useKeepConnectionLive } from '@/app/components/transcription/useKeepConnectionAlive';
+import { useConnectToDeepgramOnMicrophoneReady } from '@/app/components/transcription/useConnectToDeepgramOnMicrophoneReady';
 
-interface DeepgramContextType {
+export interface DeepgramContext {
   connection: LiveClient | null;
-  connectToDeepgram: (options: LiveSchema, endpoint?: string) => Promise<void>;
-  disconnectFromDeepgram: () => void;
-  connectionState: LiveConnectionState;
+  connectionState: SOCKET_STATES;
 }
 
-const defaultDeepgramContext: DeepgramContextType = {
+const defaultDeepgramContext: DeepgramContext = {
   connection: null,
-  connectToDeepgram: unimplementedFunction,
-  disconnectFromDeepgram: unimplementedFunction,
-  connectionState: LiveConnectionState.CLOSED,
+  connectionState: SOCKET_STATES.closed,
 };
 
-const deepgramContext = createContext<DeepgramContextType>(
-  defaultDeepgramContext,
-);
+const deepgramContext = createContext<DeepgramContext>(defaultDeepgramContext);
 
-export function useDeepgramContext(): DeepgramContextType {
+export function useDeepgramContext(): DeepgramContext {
   return useContext(deepgramContext);
 }
 
@@ -49,53 +35,17 @@ interface DeepgramContextProviderProps {
 export const DeepgramContextProvider: FunctionComponent<
   DeepgramContextProviderProps
 > = ({ children }) => {
-  const [connection, setConnection] = useState<LiveClient | null>(null);
-  const [connectionState, setConnectionState] = useState<LiveConnectionState>(
-    LiveConnectionState.CLOSED,
-  );
+  const { connection, connectionState } =
+    useConnectToDeepgramOnMicrophoneReady();
 
-  /**
-   * Connects to the Deepgram speech recognition service and sets up a live transcription session.
-   *
-   * @param options - The configuration options for the live transcription session.
-   * @param endpoint - The optional endpoint URL for the Deepgram service.
-   * @returns A Promise that resolves when the connection is established.
-   */
-  const connectToDeepgram = useCallback(
-    async (options: LiveSchema, endpoint?: string) => {
-      const token = await getToken();
-      const deepgram = createClient({ accessToken: token });
-
-      const conn = deepgram.listen.live(options, endpoint);
-
-      conn.addListener(LiveTranscriptionEvents.Open, () => {
-        setConnectionState(LiveConnectionState.OPEN);
-      });
-
-      conn.addListener(LiveTranscriptionEvents.Close, () => {
-        setConnectionState(LiveConnectionState.CLOSED);
-      });
-
-      setConnection(conn);
-    },
-    [],
-  );
-
-  const disconnectFromDeepgram = useCallback(async () => {
-    if (connection) {
-      connection.finish();
-      setConnection(null);
-    }
-  }, [connection]);
+  useKeepConnectionLive({ connection, connectionState });
 
   const value = useMemo(() => {
     return {
       connection,
-      connectToDeepgram,
-      disconnectFromDeepgram,
       connectionState,
     };
-  }, [connection, connectToDeepgram, disconnectFromDeepgram, connectionState]);
+  }, [connection, connectionState]);
 
   return (
     <deepgramContext.Provider value={value}>

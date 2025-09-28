@@ -1,26 +1,73 @@
-import { useDeepgramContext } from "@/app/components/transcription/deepgramContextProvider";
-import { useMicrophoneContext } from "@/app/components/microphone/microphoneContextProvider";
-import { useEffect } from "react";
-import { useUpdatingRef } from "@/app/components/hooks/useUpdatingRef";
-import { MicrophoneState } from "@/app/components/microphone/typesAndConstants";
+import { useMicrophoneContext } from '@/app/components/microphone/microphoneContextProvider';
+import { useCallback, useEffect, useState } from 'react';
+import { MicrophoneState } from '@/app/components/microphone/typesAndConstants';
+import {
+  createClient,
+  LiveClient,
+  LiveSchema,
+  LiveTranscriptionEvents,
+  SOCKET_STATES,
+} from '@deepgram/sdk';
+import { getToken } from '@/app/components/transcription/utils';
 
 export const useConnectToDeepgramOnMicrophoneReady = () => {
-  const { connectToDeepgram } = useDeepgramContext();
+  const { microphoneState, microphone } = useMicrophoneContext();
 
-  const { microphoneState } = useMicrophoneContext();
+  const [connection, setConnection] = useState<LiveClient | null>(null);
+  const [connectionState, setConnectionState] = useState<SOCKET_STATES>(
+    SOCKET_STATES.closed
+  );
 
-  const connectToDeepgramRef = useUpdatingRef(connectToDeepgram);
+  const connectToDeepgram = useCallback(
+    async (options: LiveSchema, endpoint?: string) => {
+      const token = await getToken();
+      const deepgram = createClient({ accessToken: token });
+
+      const conn = deepgram.listen.live(options, endpoint);
+
+      conn.on(LiveTranscriptionEvents.Open, () => {
+        console.log('Transcription connection opened');
+        setConnectionState(SOCKET_STATES.open);
+      });
+
+      conn.on(LiveTranscriptionEvents.Close, () => {
+        console.log('Transcription connection closed');
+        setConnectionState(SOCKET_STATES.closed);
+      });
+
+      conn.on(LiveTranscriptionEvents.Transcript, (data) => {
+        console.log(data.channel.alternatives[0].transcript);
+      });
+
+      setConnection(conn);
+    },
+    []
+  );
+
+  const disconnectFromDeepgram = useCallback(async () => {
+    if (connection) {
+      connection.requestClose();
+      setConnection(null);
+      setConnectionState(SOCKET_STATES.closed);
+    }
+  }, [connection]);
+
   useEffect(() => {
-    if (!connectToDeepgramRef.current) return;
-
-    if (microphoneState === MicrophoneState.Ready) {
-      connectToDeepgramRef.current({
-        model: "nova-3",
+    if (microphone && microphoneState === MicrophoneState.Ready) {
+      connectToDeepgram({
+        model: 'nova-3',
         interim_results: true,
         smart_format: true,
         filler_words: true,
         utterance_end_ms: 3000,
       });
+    } else {
+      disconnectFromDeepgram();
     }
-  }, [connectToDeepgramRef, microphoneState]);
+  }, [connectToDeepgram, disconnectFromDeepgram, microphone, microphoneState]);
+
+  return {
+    connection,
+    connectionState,
+  };
 };
