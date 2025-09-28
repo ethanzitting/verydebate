@@ -9,7 +9,6 @@ import {
   useContext,
   useMemo,
 } from 'react';
-import { useKeepConnectionLive } from '@/app/components/transcription/useKeepConnectionAlive';
 import { useConnectToDeepgramOnMicrophoneReady } from '@/app/components/transcription/useConnectToDeepgramOnMicrophoneReady';
 
 export interface DeepgramContext {
@@ -37,8 +36,6 @@ export const DeepgramContextProvider: FunctionComponent<
 > = ({ children }) => {
   const { connection, connectionState } =
     useConnectToDeepgramOnMicrophoneReady();
-
-  useKeepConnectionLive({ connection, connectionState });
 
   const value = useMemo(() => {
     return {

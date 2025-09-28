@@ -38,13 +38,11 @@ export const MicrophoneContextProvider: FC<PropsWithChildren> = ({
   children,
 }) => {
   const [microphoneState, setMicrophoneState] = useState<MicrophoneState>(
-    MicrophoneState.NotSetup
+    MicrophoneState.Closed
   );
   const [microphone, setMicrophone] = useState<MediaRecorder | null>(null);
 
   const initializeMicrophone = useCallback(async () => {
-    setMicrophoneState(MicrophoneState.SettingUp);
-
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         audio: {
@@ -54,11 +52,12 @@ export const MicrophoneContextProvider: FC<PropsWithChildren> = ({
       });
 
       const mediaRecorder = new MediaRecorder(mediaStream);
+      mediaRecorder.start();
 
-      setMicrophoneState(MicrophoneState.Ready);
+      setMicrophoneState(MicrophoneState.Open);
       setMicrophone(mediaRecorder);
-    } catch (error: any) {
-      setMicrophoneState(MicrophoneState.Error);
+    } catch (error) {
+      setMicrophoneState(MicrophoneState.Closed);
       console.error(error);
 
       throw error;
@@ -66,32 +65,26 @@ export const MicrophoneContextProvider: FC<PropsWithChildren> = ({
   }, []);
 
   const pauseMicrophone = useCallback(() => {
-    if (!microphone) return;
+    if (!microphone || microphone.state !== 'recording') return;
 
-    setMicrophoneState(MicrophoneState.Pausing);
-
-    if (microphone.state === 'recording') {
-      microphone.pause();
-      setMicrophoneState(MicrophoneState.Paused);
-    }
+    microphone.pause();
+    setMicrophoneState(MicrophoneState.Closed);
   }, [microphone]);
 
   const resumeMicrophone = useCallback(() => {
     if (!microphone) return;
-
-    setMicrophoneState(MicrophoneState.Opening);
 
     microphone.resume();
     setMicrophoneState(MicrophoneState.Open);
   }, [microphone]);
 
   const startMicrophone = useCallback(async () => {
-    if (microphoneState === MicrophoneState.Paused) {
+    if (microphone?.state === 'paused') {
       resumeMicrophone();
     } else {
       await initializeMicrophone();
     }
-  }, [initializeMicrophone, microphoneState, resumeMicrophone]);
+  }, [initializeMicrophone, microphone?.state, resumeMicrophone]);
 
   const value: MicrophoneContext = useMemo(() => {
     return {

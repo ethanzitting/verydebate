@@ -1,17 +1,17 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useDeepgramContext } from "./deepgramContextProvider";
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useDeepgramContext } from './deepgramContextProvider';
 import {
-  LiveConnectionState,
   LiveTranscriptionEvent,
   LiveTranscriptionEvents,
-} from "@deepgram/sdk";
-import { useFixIosSafariBugDataAvailableListener } from "@/app/components/microphone/useFixIosSafariBugDataAvailableListener";
+  SOCKET_STATES,
+} from '@deepgram/sdk';
+import { useFixIosSafariBugDataAvailableListener } from '@/app/components/microphone/useFixIosSafariBugDataAvailableListener';
 
 export const useAudioTranscriptionHandler = () => {
   const { connection, connectionState } = useDeepgramContext();
 
   const [caption, setCaption] = useState<string | undefined>(
-    "Powered by Deepgram",
+    'Powered by Deepgram'
   );
   const captionTimeout = useRef<NodeJS.Timeout | undefined>(undefined);
 
@@ -19,12 +19,12 @@ export const useAudioTranscriptionHandler = () => {
 
   const handleTranscriptTextStream = useCallback(
     (data: LiveTranscriptionEvent) => {
-      console.log("Transcript event", data);
+      console.log('Transcript event', data);
       const { is_final: isFinal, speech_final: speechFinal } = data;
       const thisCaption = data.channel.alternatives[0].transcript;
 
-      console.log("thisCaption", thisCaption);
-      if (thisCaption !== "") {
+      console.log('thisCaption', thisCaption);
+      if (thisCaption !== '') {
         console.log('thisCaption !== ""', thisCaption);
         setCaption(thisCaption);
       }
@@ -37,23 +37,23 @@ export const useAudioTranscriptionHandler = () => {
         }, 3000);
       }
     },
-    [],
+    []
   );
 
   useEffect(() => {
     if (!connection) return;
 
-    if (connectionState === LiveConnectionState.OPEN) {
+    if (connectionState === SOCKET_STATES.open) {
       connection.addListener(
         LiveTranscriptionEvents.Transcript,
-        handleTranscriptTextStream,
+        handleTranscriptTextStream
       );
     }
 
     return () => {
       connection.removeListener(
         LiveTranscriptionEvents.Transcript,
-        handleTranscriptTextStream,
+        handleTranscriptTextStream
       );
       clearTimeout(captionTimeout.current);
     };

@@ -9,6 +9,7 @@ import {
   SOCKET_STATES,
 } from '@deepgram/sdk';
 import { getToken } from '@/app/components/transcription/utils';
+import { useUpdatingRef } from '@/app/components/hooks/useUpdatingRef';
 
 export const useConnectToDeepgramOnMicrophoneReady = () => {
   const { microphoneState, microphone } = useMicrophoneContext();
@@ -35,25 +36,22 @@ export const useConnectToDeepgramOnMicrophoneReady = () => {
         setConnectionState(SOCKET_STATES.closed);
       });
 
-      conn.on(LiveTranscriptionEvents.Transcript, (data) => {
-        console.log(data.channel.alternatives[0].transcript);
-      });
-
       setConnection(conn);
     },
     []
   );
 
+  const connectionRef = useUpdatingRef(connection);
   const disconnectFromDeepgram = useCallback(async () => {
-    if (connection) {
-      connection.requestClose();
+    if (connectionRef.current) {
+      connectionRef.current.requestClose();
       setConnection(null);
       setConnectionState(SOCKET_STATES.closed);
     }
-  }, [connection]);
+  }, [connectionRef]);
 
   useEffect(() => {
-    if (microphone && microphoneState === MicrophoneState.Ready) {
+    if (microphone && microphoneState === MicrophoneState.Open) {
       connectToDeepgram({
         model: 'nova-3',
         interim_results: true,

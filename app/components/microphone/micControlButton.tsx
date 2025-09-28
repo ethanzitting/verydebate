@@ -9,7 +9,7 @@ export const MicControlButton: FC = () => {
     useMicrophoneContext();
 
   const handleMicToggle = useCallback(() => {
-    if (microphoneState === MicrophoneState.Ready) {
+    if (microphoneState === MicrophoneState.Open) {
       stopMicrophone();
     } else {
       startMicrophone();
