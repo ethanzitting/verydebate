@@ -5,7 +5,6 @@ import { useAudioTranscriptionHandler } from '../transcription/useAudioTranscrip
 import { MicControlButton } from '@/app/components/microphone/micControlButton';
 
 export const HomePage: FC = () => {
-
   const { caption } = useAudioTranscriptionHandler();
 
   return (

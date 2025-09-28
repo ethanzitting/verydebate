@@ -52,13 +52,20 @@ export const MicrophoneContextProvider: FC<PropsWithChildren> = ({
       });
 
       const mediaRecorder = new MediaRecorder(mediaStream);
-      mediaRecorder.start();
+      mediaRecorder.start(1000);
+
+      mediaRecorder.addEventListener('error', (event) => {
+        console.error(`error recording stream: ${event.error.name}`);
+        setMicrophoneState(MicrophoneState.Closed);
+        setMicrophone(null);
+      });
 
       setMicrophoneState(MicrophoneState.Open);
       setMicrophone(mediaRecorder);
     } catch (error) {
       setMicrophoneState(MicrophoneState.Closed);
       console.error(error);
+      setMicrophone(null);
 
       throw error;
     }
