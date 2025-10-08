@@ -10,7 +10,6 @@ import { useFixIosSafariBugDataAvailableListener } from '@/app/components/microp
 export const useAccessTranscriptStream = () => {
   const { connection, connectionState } = useDeepgramContext();
 
-  const [activeParagraph, setActiveParagraph] = useState<string>('');
   const [finalizedParagraphs, setFinalizedParagraphs] = useState<string[]>([]);
 
   useFixIosSafariBugDataAvailableListener();
@@ -27,15 +26,6 @@ export const useAccessTranscriptStream = () => {
     []
   );
 
-  const storeCurrentStatement = useCallback((data: LiveTranscriptionEvent) => {
-    console.log('Transcript event', data);
-    const { channel } = data;
-    const thisCaption = channel.alternatives[0].transcript;
-
-    console.log('thisCaption: ', thisCaption);
-    setActiveParagraph(thisCaption);
-  }, []);
-
   useEffect(() => {
     if (!connection) return;
 
@@ -44,10 +34,6 @@ export const useAccessTranscriptStream = () => {
         LiveTranscriptionEvents.Transcript,
         saveCompletedParagraphs
       );
-      connection.addListener(
-        LiveTranscriptionEvents.Transcript,
-        storeCurrentStatement
-      );
     }
 
     return () => {
@@ -55,20 +41,10 @@ export const useAccessTranscriptStream = () => {
         LiveTranscriptionEvents.Transcript,
         saveCompletedParagraphs
       );
-      connection.removeListener(
-        LiveTranscriptionEvents.Transcript,
-        storeCurrentStatement
-      );
     };
-  }, [
-    connection,
-    connectionState,
-    saveCompletedParagraphs,
-    storeCurrentStatement,
-  ]);
+  }, [connection, connectionState, saveCompletedParagraphs]);
 
   return {
     paragraphs: finalizedParagraphs,
-    currentParagraph: activeParagraph,
   };
 };

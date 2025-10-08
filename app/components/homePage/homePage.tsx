@@ -5,7 +5,7 @@ import { useAccessTranscriptStream } from '../transcription/useAccessTranscriptS
 import { MicControlButton } from '@/app/components/microphone/micControlButton';
 
 export const HomePage: FC = () => {
-  const { paragraphs, currentParagraph } = useAccessTranscriptStream();
+  const { paragraphs } = useAccessTranscriptStream();
 
   return (
     <div className="h-full w-full items-center justify-center bg-amber-50 flex flex-col gap-6">
@@ -15,7 +15,6 @@ export const HomePage: FC = () => {
           {paragraph}
         </div>
       ))}
-      <div className="p-8">{currentParagraph}</div>
     </div>
   );
 };
