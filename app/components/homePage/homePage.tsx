@@ -1,7 +1,10 @@
 'use client';
 
 import { FC } from 'react';
-import { useAccessTranscriptStream } from '../transcription/useAccessTranscriptStream';
+import {
+  SpeakerStatement,
+  useAccessTranscriptStream,
+} from '../transcription/useAccessTranscriptStream';
 import { MicControlButton } from '@/app/components/microphone/micControlButton';
 
 export const HomePage: FC = () => {
@@ -10,9 +13,9 @@ export const HomePage: FC = () => {
   return (
     <div className="h-full w-full items-center justify-center bg-amber-50 flex flex-col gap-6">
       <MicControlButton />
-      {paragraphs.map((paragraph, index) => (
+      {paragraphs.map((paragraph: SpeakerStatement, index) => (
         <div className="p-8" key={index}>
-          {paragraph}
+          Speaker: {paragraph.speakerIndex}, {paragraph.statement}
         </div>
       ))}
     </div>

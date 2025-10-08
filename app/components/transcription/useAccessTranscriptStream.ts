@@ -6,22 +6,45 @@ import {
   SOCKET_STATES,
 } from '@deepgram/sdk';
 import { useFixIosSafariBugDataAvailableListener } from '@/app/components/microphone/useFixIosSafariBugDataAvailableListener';
+import _ from 'lodash';
+
+export type SpeakerStatement = {
+  speakerIndex: number;
+  statement: string;
+};
 
 export const useAccessTranscriptStream = () => {
   const { connection, connectionState } = useDeepgramContext();
 
-  const [finalizedParagraphs, setFinalizedParagraphs] = useState<string[]>([]);
+  const [speakerStatements, setSpeakerStatements] = useState<
+    SpeakerStatement[]
+  >([]);
 
   useFixIosSafariBugDataAvailableListener();
 
   const saveCompletedParagraphs = useCallback(
     (data: LiveTranscriptionEvent) => {
       const { is_final: isFinal, speech_final: speechFinal, channel } = data;
-      const thisCaption = channel.alternatives[0].transcript;
+      const { alternatives } = channel;
 
+      if (alternatives.length > 1) console.error('Multiple alternatives');
+      const statement = alternatives[0];
+
+      const thisCaption = statement.transcript;
       if (!isFinal || !speechFinal || !thisCaption) return;
 
-      setFinalizedParagraphs((prev) => [...prev, thisCaption]);
+      const speakerStatements = _.groupBy(statement.words, 'speaker');
+
+      const foo = Object.keys(speakerStatements).map((speaker) => {
+        const speakerStatement = speakerStatements[speaker];
+
+        return {
+          speakerIndex: speakerStatement[0].speaker,
+          statement: speakerStatement.map((word) => word.word).join(' '),
+        };
+      });
+
+      setSpeakerStatements((prev) => [...prev, ...foo]);
     },
     []
   );
@@ -45,6 +68,6 @@ export const useAccessTranscriptStream = () => {
   }, [connection, connectionState, saveCompletedParagraphs]);
 
   return {
-    paragraphs: finalizedParagraphs,
+    paragraphs: speakerStatements,
   };
 };
