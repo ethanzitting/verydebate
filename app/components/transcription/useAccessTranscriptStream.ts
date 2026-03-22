@@ -39,7 +39,7 @@ export const useAccessTranscriptStream = () => {
         const speakerStatement = speakerStatements[speaker];
 
         return {
-          speakerIndex: speakerStatement[0].speaker,
+          speakerIndex: speakerStatement[0].speaker ?? 0,
           statement: speakerStatement.map((word) => word.word).join(' '),
         };
       });
