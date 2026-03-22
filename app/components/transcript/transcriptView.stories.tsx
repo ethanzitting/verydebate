@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import { TranscriptView } from './transcriptView';
 import type { SpeakerColor, Utterance } from '@/app/types';
@@ -87,12 +88,27 @@ const fourSpeakerUtterances: Utterance[] = [
   },
 ];
 
+const streamingUtterances: Utterance[] = [
+  { id: '1', speakerIndex: 0, text: 'Welcome everyone. Let me lay out the ground rules for tonight.', timestampMs: 1000 },
+  { id: '2', speakerIndex: 1, text: 'Sounds good. I have a lot to say on this topic.', timestampMs: 2000 },
+  { id: '3', speakerIndex: 0, text: 'Each speaker gets two minutes for opening statements. No interruptions.', timestampMs: 3000 },
+  { id: '4', speakerIndex: 1, text: "Fair enough. I'll go first if that's alright.", timestampMs: 4000 },
+  { id: '5', speakerIndex: 0, text: 'Please, go ahead.', timestampMs: 5000 },
+  { id: '6', speakerIndex: 1, text: 'The fundamental problem with the current approach is that it ignores decades of research showing the opposite conclusion.', timestampMs: 6000 },
+  { id: '7', speakerIndex: 0, text: "That's a bold claim. Can you cite specific studies?", timestampMs: 7000 },
+  { id: '8', speakerIndex: 1, text: 'Absolutely. The Stanford meta-analysis from 2023 reviewed over 400 papers and found consistent results.', timestampMs: 8000 },
+  { id: '9', speakerIndex: 0, text: "I'm familiar with that study. But the methodology has been widely criticized.", timestampMs: 9000 },
+  { id: '10', speakerIndex: 1, text: 'By whom? The criticism came from a single lab with a known conflict of interest.', timestampMs: 10000 },
+  { id: '11', speakerIndex: 0, text: "That's not entirely accurate. Several independent reviewers raised concerns about sample selection.", timestampMs: 11000 },
+  { id: '12', speakerIndex: 1, text: 'Minor methodological quibbles that did not affect the core findings.', timestampMs: 12000 },
+];
+
 const meta: Meta<typeof TranscriptView> = {
   title: 'Transcript/TranscriptView',
   component: TranscriptView,
   decorators: [
     (Story) => (
-      <div className="mx-auto w-[700px] bg-white">
+      <div className="mx-auto h-[500px] w-[700px] bg-white">
         <Story />
       </div>
     ),
@@ -135,5 +151,35 @@ export const Empty: Story = {
     utterances: [],
     palette,
     totalSpeakers: 0,
+  },
+};
+
+/**
+ * Appends utterances one at a time on a 1.5s interval.
+ * Auto-scrolls to bottom. Scroll up to see the "New messages" button.
+ */
+export const AutoScrollDemo: Story = {
+  render: () => {
+    const [utterances, setUtterances] = useState<Utterance[]>([]);
+    const [index, setIndex] = useState(0);
+
+    useEffect(() => {
+      if (index >= streamingUtterances.length) return;
+
+      const timer = setTimeout(() => {
+        setUtterances((prev) => [...prev, streamingUtterances[index]]);
+        setIndex((i) => i + 1);
+      }, 1500);
+
+      return () => clearTimeout(timer);
+    }, [index]);
+
+    return (
+      <TranscriptView
+        utterances={utterances}
+        palette={palette}
+        totalSpeakers={2}
+      />
+    );
   },
 };
