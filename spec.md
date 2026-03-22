@@ -138,7 +138,6 @@ The current interim preview renders at the bottom of the chat as a visually dist
 | Variable | Description |
 |---|---|
 | `DEEPGRAM_API_KEY` | Deepgram API key |
-| `DEEPGRAM_ENV` | Set to `development` to skip token generation |
 | `DEBATE_PASSWORD` | Password for site access |
 
 ## Future (punted)

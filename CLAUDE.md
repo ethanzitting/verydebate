@@ -39,7 +39,6 @@ Global state is managed via React Context providers nested in `app/components/pr
 ### Key env vars
 
 - `DEEPGRAM_API_KEY` — Deepgram API key
-- `DEEPGRAM_ENV` — set to `development` to skip token generation and use the API key directly
 - `DEBATE_PASSWORD` — password for site access
 
 ## Conventions
