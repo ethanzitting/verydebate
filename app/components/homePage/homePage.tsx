@@ -1,23 +1,26 @@
 'use client';
 
 import { FC } from 'react';
-import {
-  SpeakerStatement,
-  useAccessTranscriptStream,
-} from '../transcription/useAccessTranscriptStream';
 import { MicControlButton } from '@/app/components/microphone/micControlButton';
+import { TranscriptView } from '@/app/components/transcript/transcriptView';
+import { useDebateSession } from '@/app/components/debate/debateSessionContext';
 
 export const HomePage: FC = () => {
-  const { paragraphs } = useAccessTranscriptStream();
+  const { utterances, speakers, palette, interimPreview } = useDebateSession();
 
   return (
-    <div className="h-full w-full items-center justify-center bg-amber-50 flex flex-col gap-6">
-      <MicControlButton />
-      {paragraphs.map((paragraph: SpeakerStatement, index) => (
-        <div className="p-8" key={index}>
-          Speaker: {paragraph.speakerIndex}, {paragraph.statement}
-        </div>
-      ))}
+    <div className="flex h-full w-full flex-col bg-neutral-50">
+      <div className="flex items-center justify-center border-b border-neutral-200 py-4">
+        <MicControlButton />
+      </div>
+      <div className="min-h-0 flex-1">
+        <TranscriptView
+          utterances={utterances}
+          palette={palette}
+          totalSpeakers={speakers.length}
+          interimPreview={interimPreview}
+        />
+      </div>
     </div>
   );
 };
