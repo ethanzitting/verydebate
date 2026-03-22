@@ -66,13 +66,20 @@ export type TranscriptProcessorResult = {
   interimPreview: InterimPreview | null;
 };
 
+export type TranscriptProcessorOptions = {
+  palette: SpeakerColor[];
+  initialUtterances?: Utterance[];
+  initialSpeakers?: Speaker[];
+};
+
 export const useTranscriptProcessor = (
-  palette: SpeakerColor[],
+  options: TranscriptProcessorOptions,
 ): TranscriptProcessorResult => {
+  const { palette, initialUtterances, initialSpeakers } = options;
   const { connection, connectionState } = useDeepgramContext();
 
-  const [utterances, setUtterances] = useState<Utterance[]>([]);
-  const [speakers, setSpeakers] = useState<Speaker[]>([]);
+  const [utterances, setUtterances] = useState<Utterance[]>(initialUtterances ?? []);
+  const [speakers, setSpeakers] = useState<Speaker[]>(initialSpeakers ?? []);
   const [interimPreview, setInterimPreview] = useState<InterimPreview | null>(
     null,
   );
