@@ -58,7 +58,8 @@ export const useConnectToDeepgramOnMicrophoneReady = () => {
         smart_format: true,
         filler_words: true,
         diarize: true,
-        utterance_end_ms: 3000,
+        endpointing: 300,
+        utterance_end_ms: 1000,
       });
     } else {
       disconnectFromDeepgram();

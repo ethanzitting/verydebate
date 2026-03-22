@@ -8,6 +8,8 @@ export enum MicrophoneEvents {
 }
 
 export enum MicrophoneState {
-  Closed = 'closed',
+  NotRequested = 'notRequested',
   Open = 'open',
+  Paused = 'paused',
+  Error = 'error',
 }

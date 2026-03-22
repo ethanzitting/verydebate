@@ -1,39 +1,51 @@
+'use client';
+
 import { FC, useCallback } from 'react';
 import { MicrophoneState } from '@/app/components/microphone/typesAndConstants';
 import { useMicrophoneContext } from '@/app/components/microphone/microphoneContextProvider';
-import { twMerge } from 'tailwind-merge';
 import { FontAwesomeIcon } from '@/app/components/fontawesome/fontAwesomeIcon';
 
 export const MicControlButton: FC = () => {
-  const { microphoneState, startMicrophone, stopMicrophone } =
+  const { microphoneState, errorMessage, startMicrophone, pauseMicrophone } =
     useMicrophoneContext();
 
-  const handleMicToggle = useCallback(() => {
-    if (microphoneState === MicrophoneState.Open) {
-      stopMicrophone();
+  const isOpen = microphoneState === MicrophoneState.Open;
+  const isError = microphoneState === MicrophoneState.Error;
+
+  const handleClick = useCallback(() => {
+    if (isOpen) {
+      pauseMicrophone();
     } else {
       startMicrophone();
     }
-  }, [microphoneState, startMicrophone, stopMicrophone]);
+  }, [isOpen, startMicrophone, pauseMicrophone]);
 
   return (
-    <button
-      className={twMerge(
-        'max-h-[60px] max-w-[60px] min-h-[60px] min-w-[60px] rounded-full cursor-pointer bg-white border-2 border-gray-70 group flex items-center justify-center',
-        ''
+    <div className="flex flex-col items-center gap-2">
+      <button
+        onClick={handleClick}
+        className="relative flex h-16 w-16 cursor-pointer items-center justify-center rounded-full border-2 border-neutral-300 bg-white transition-colors hover:border-neutral-400"
+      >
+        {isOpen && (
+          <span className="absolute inset-0 animate-ping rounded-full bg-red-400 opacity-20" />
+        )}
+        {isOpen ? (
+          <FontAwesomeIcon icon="fa-pause" size="24px" />
+        ) : (
+          <FontAwesomeIcon icon="fa-microphone" size="24px" />
+        )}
+        {isOpen && (
+          <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-red-500" />
+        )}
+      </button>
+      {isError && errorMessage && (
+        <p className="max-w-64 text-center text-xs text-red-600">
+          {errorMessage}
+        </p>
       )}
-      onClick={handleMicToggle}
-    >
-      <FontAwesomeIcon
-        icon="fa-microphone"
-        size="28px"
-        className="block! group-hover:hidden!"
-      />
-      <FontAwesomeIcon
-        icon={microphoneState === MicrophoneState.Open ? 'fa-pause' : 'fa-play'}
-        size="28px"
-        className="hidden! group-hover:block!"
-      />
-    </button>
+      {microphoneState === MicrophoneState.Paused && (
+        <p className="text-xs text-neutral-400">Paused</p>
+      )}
+    </div>
   );
 };
