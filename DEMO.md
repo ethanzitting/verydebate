@@ -1,6 +1,7 @@
 # Debate meaning demo
 
-This branch saves the static debate interface and the research behind it. It does not change the live VeryDebate app.
+The `concepts/` directory saves the static debate interface and its research.
+The Next.js app now uses that design for a live microphone transcript.
 
 Open `concepts/live-stage.html` through a local web server. For example, run `python3 -m http.server 8765 --directory concepts` from the repository root. Then open `http://localhost:8765/live-stage.html?debate=science&moment=shortlist`.
 

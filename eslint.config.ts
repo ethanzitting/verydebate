@@ -14,7 +14,7 @@ const compat = new FlatCompat({
 
 /** @type {import('eslint').Linter.Config[]} */
 const config = [
-  { ignores: [".next/**", "public/**", "next.config.js", "postcss.config.js"] },
+  { ignores: [".next/**", "next-env.d.ts", "public/**", "next.config.js", "postcss.config.js"] },
   { files: ["**/*.{js,mjs,cjs,ts,jsx,tsx}"] },
   { languageOptions: { globals: { ...globals.browser, ...globals.node } } },
   pluginJs.configs.recommended,

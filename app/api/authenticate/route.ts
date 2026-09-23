@@ -1,42 +1,42 @@
-import { createClient, DeepgramError } from "@deepgram/sdk";
-import { type NextRequest, NextResponse } from "next/server";
+import { createClient } from '@deepgram/sdk';
+import { NextRequest, NextResponse } from 'next/server';
+import { hasSession } from '@/app/lib/session';
 
-export const revalidate = 0;
+export const dynamic = 'force-dynamic';
 
-export async function GET(request: NextRequest) {
-  // exit early so we don't request 70000000 keys while in devmode
-  if (process.env.DEEPGRAM_ENV === "development") {
-    return NextResponse.json({
-      key: process.env.DEEPGRAM_API_KEY ?? "",
-    });
-  }
-
-  // gotta use the request object to invalidate the cache every request :vomit:
-  const url = request.url;
-  const deepgram = createClient(process.env.DEEPGRAM_API_KEY ?? "");
-
-  const { result: tokenResult, error: tokenError } =
-    await deepgram.auth.grantToken();
-
-  if (tokenError) {
-    return NextResponse.json(tokenError);
-  }
-
-  if (!tokenResult) {
+export async function POST(request: NextRequest) {
+  if (!hasSession(request)) {
     return NextResponse.json(
-      new DeepgramError(
-        "Failed to generate temporary token. Make sure your API key is of scope Member or higher.",
-      ),
+      { error: 'Sign in to start transcription.' },
+      { status: 401 },
     );
   }
 
-  const response = NextResponse.json({ ...tokenResult, url });
-  response.headers.set("Surrogate-Control", "no-store");
-  response.headers.set(
-    "Cache-Control",
-    "s-maxage=0, no-store, no-cache, must-revalidate, proxy-revalidate",
-  );
-  response.headers.set("Expires", "0");
+  const apiKey = process.env.DEEPGRAM_API_KEY;
+  if (!apiKey) {
+    return NextResponse.json(
+      { error: 'DEEPGRAM_API_KEY is not configured.' },
+      { status: 503 },
+    );
+  }
 
-  return response;
+  try {
+    const { result, error } = await createClient(apiKey).auth.grantToken();
+    if (error || !result?.access_token) {
+      return NextResponse.json(
+        { error: 'Deepgram could not issue a temporary token.' },
+        { status: 502 },
+      );
+    }
+
+    return NextResponse.json(
+      { access_token: result.access_token },
+      { headers: { 'Cache-Control': 'no-store' } },
+    );
+  } catch {
+    return NextResponse.json(
+      { error: 'Deepgram token request failed.' },
+      { status: 502 },
+    );
+  }
 }

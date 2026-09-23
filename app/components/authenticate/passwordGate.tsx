@@ -9,8 +9,6 @@ import {
   useState,
 } from 'react';
 
-const LOCAL_STORAGE_KEY = 'verydebate-auth';
-
 export const PasswordGate: FC<PropsWithChildren> = ({ children }) => {
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
   const [password, setPassword] = useState('');
@@ -18,7 +16,14 @@ export const PasswordGate: FC<PropsWithChildren> = ({ children }) => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    setAuthenticated(localStorage.getItem(LOCAL_STORAGE_KEY) === 'true');
+    const controller = new AbortController();
+    fetch('/api/auth', { cache: 'no-store', signal: controller.signal })
+      .then((response) => response.json())
+      .then((result) => setAuthenticated(result.authenticated === true))
+      .catch(() => {
+        if (!controller.signal.aborted) setAuthenticated(false);
+      });
+    return () => controller.abort();
   }, []);
 
   const handleSubmit = useCallback(
@@ -35,10 +40,10 @@ export const PasswordGate: FC<PropsWithChildren> = ({ children }) => {
         });
 
         if (res.ok) {
-          localStorage.setItem(LOCAL_STORAGE_KEY, 'true');
           setAuthenticated(true);
         } else {
-          setError('Wrong password');
+          const result = await res.json();
+          setError(result.error ?? 'Sign in failed.');
         }
       } catch {
         setError('Something went wrong');
@@ -49,39 +54,32 @@ export const PasswordGate: FC<PropsWithChildren> = ({ children }) => {
     [password],
   );
 
-  // Still checking localStorage
+  // Check the server session before showing the app.
   if (authenticated === null) return null;
 
   if (authenticated) return <>{children}</>;
 
   return (
-    <div className="flex h-full w-full items-center justify-center bg-neutral-50">
-      <form
-        onSubmit={handleSubmit}
-        className="flex w-80 flex-col gap-4"
-      >
-        <h1 className="text-center text-lg font-medium text-neutral-700">
-          VeryDebate
-        </h1>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Enter password"
-          autoFocus
-          className="rounded-lg border border-neutral-300 px-4 py-2 text-sm text-neutral-800 outline-none focus:border-neutral-500"
-        />
-        <button
-          type="submit"
-          disabled={loading || !password}
-          className="rounded-lg bg-neutral-700 px-4 py-2 text-sm text-white transition-colors hover:bg-neutral-600 disabled:opacity-50 cursor-pointer"
-        >
-          {loading ? 'Checking...' : 'Enter'}
-        </button>
-        {error && (
-          <p className="text-center text-sm text-red-600">{error}</p>
-        )}
-      </form>
-    </div>
+    <main className="auth-page">
+      <div className="auth-brand">verydebate<span>.</span></div>
+      <section className="auth-panel" aria-labelledby="auth-title">
+        <h1 id="auth-title">Open the live transcript</h1>
+        <p>Enter the shared password to start a debate session.</p>
+        <form onSubmit={handleSubmit}>
+          <label htmlFor="debate-password">Password</label>
+          <input
+            id="debate-password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoFocus
+          />
+          <button type="submit" disabled={loading || !password}>
+            {loading ? 'Checking...' : 'Open transcript'}
+          </button>
+          {error && <p className="auth-error" role="alert">{error}</p>}
+        </form>
+      </section>
+    </main>
   );
 };

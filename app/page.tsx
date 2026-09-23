@@ -1,9 +1,5 @@
-import { HomePage } from '@/app/components/homePage/homePage';
+import { LiveDebate } from '@/app/components/live/liveDebate';
 
 export default function Home() {
-  return (
-    <main className="h-full w-full">
-      <HomePage />
-    </main>
-  );
+  return <LiveDebate />;
 }
