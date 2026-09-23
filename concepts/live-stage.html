@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f3f6f8">
+  <title>Recorded debate — The Record</title>
+  <link rel="stylesheet" href="chat-view.css">
+  <link rel="stylesheet" href="public-display.css?v=29">
+  <script src="debate-loader.js?v=9" defer></script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="index.html" aria-label="The Record concepts">the record<span class="brand-stop">.</span></a>
+    <span class="header-note">Real transcript concept</span>
+    <a class="all-views" href="index.html">All views</a>
+  </header>
+
+  <main class="page-shell">
+    <section class="chat-app" aria-label="Recorded debate meaning stream">
+      <header class="chat-header">
+        <div class="chat-heading"><h1>Debate replay</h1><label class="debate-picker-label"><span>Recording</span><select id="debate-picker"><option value="science">Science, trust, and gender</option><option value="abortion">Abortion debate</option></select></label></div>
+        <div class="chat-status"><button type="button" class="replay-button" id="replay-button">Replay last exchange</button></div>
+      </header>
+
+      <div class="chat-body">
+        <section class="meaning-section" aria-label="Likely meanings in the debate">
+          <div class="meaning-heading"><h2>What they likely mean</h2><span>Our interpretation, not their words</span><button type="button" class="follow-button" id="follow-button" hidden>Return to latest</button></div>
+          <div class="meaning-scroll" id="meaning-scroll" tabindex="0" aria-label="Likely meanings. Scroll up to review earlier meanings.">
+            <ol class="meaning-list" id="meaning-list"><li class="load-note">The meanings will appear here.</li></ol>
+          </div>
+        </section>
+
+        <section class="transcript-panel is-collapsed" id="transcript-panel" aria-label="Transcript">
+          <button type="button" class="transcript-grip" id="transcript-grip" aria-controls="transcript-content" aria-expanded="false" aria-label="Drag up or select to open the transcript"><span aria-hidden="true"></span></button>
+          <div class="transcript-heading"><h2>Transcript</h2><span id="transcript-preview" aria-live="polite">Drag up to review the speech</span><button type="button" class="clear-transcript-filter" id="clear-transcript-filter" hidden>Show all speech</button></div>
+          <div class="chat-scroll" id="transcript-content" tabindex="0" aria-label="Debate transcript. Scroll up for earlier speech." hidden>
+            <ol class="messages" id="messages"><li class="load-note">The transcript will appear here.</li></ol>
+          </div>
+        </section>
+      </div>
+      <footer class="chat-footer"><span class="record-indicator" id="position-label">Recorded debate</span><span>Manual interpretations · No fact check</span><button type="button" class="footer-note" data-dialog="speaker-dialog">Names and IDs</button></footer>
+    </section>
+    <p class="demo-note">Deepgram made the transcript. The demo author wrote the meanings. The demo does not check factual claims.</p>
+  </main>
+
+  <dialog class="detail-dialog" id="speaker-dialog" aria-labelledby="speaker-title">
+    <div class="dialog-content">
+      <div class="dialog-top"><span class="detail-type detail-type-fact">Names and IDs</span><form method="dialog"><button class="close-button" aria-label="Close speaker detail">×</button></form></div>
+      <h2 id="speaker-title">Speaker identities</h2>
+      <p id="speaker-method">The transcript service assigned speaker IDs.</p>
+      <div class="detail-state"><span class="state-dot question-state"></span><div><strong id="speaker-count-label">Speaker map</strong><small id="speaker-list">The raw transcript keeps the original IDs.</small></div></div>
+      <p class="detail-caution">Brief overlap can have the wrong speaker. The transcript can also contain wrong words.</p>
+      <form method="dialog" class="dialog-actions"><button>Back to chat</button></form>
+    </div>
+  </dialog>
+
+  <dialog class="detail-dialog" id="insert-dialog" aria-labelledby="insert-title">
+    <div class="dialog-content">
+      <div class="dialog-top"><span class="detail-type">Recorded insert</span><form method="dialog"><button class="close-button" aria-label="Close insert detail">×</button></form></div>
+      <h2 id="insert-title">Sponsored segment</h2>
+      <p id="insert-description">The recording contains an insert. The page keeps it apart from the debate points.</p>
+      <div class="insert-transcript" id="insert-transcript"></div>
+      <form method="dialog" class="dialog-actions"><button>Back to chat</button></form>
+    </div>
+  </dialog>
+</body>
+</html>
