@@ -25,7 +25,8 @@ The browser sends microphone audio to a local WebSocket relay on port 3001.
 The relay checks the password session and sends the audio to Deepgram.
 The browser never receives the long-lived API key.
 Deepgram assigns a numeric speaker ID to each word.
-The transcript groups adjacent words from the same speaker into one entry.
+The transcript joins adjacent segments from the same speaker into one bubble.
+A speaker change starts a new bubble. Live words appear in the current bubble.
 
 The transcript stays in memory during this visit. A page reload clears it.
 The **Clear transcript** control clears it before a reload.

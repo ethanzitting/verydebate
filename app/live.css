@@ -372,6 +372,7 @@ button:disabled { cursor: not-allowed; }
 .message-center .bubble { align-self: center; border-radius: 11px 11px 4px 4px; }
 .message-unknown .bubble { align-self: center; background: #576a72; }
 .message-preview .bubble { opacity: .65; }
+.bubble-preview { opacity: .65; }
 .message-preview .message-meta span { color: #8a6546; }
 .live-footer {
   display: flex;

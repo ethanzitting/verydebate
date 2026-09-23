@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { LiveTranscriptionEvent } from '@deepgram/sdk';
 import {
+  displayLines,
   initialTranscriptState,
   previewLines,
   reduceTranscript,
@@ -88,5 +89,66 @@ describe('live transcript', () => {
       text: 'Maybe.',
     });
     expect(previewLines(finished)).toEqual([]);
+  });
+
+  it('shows adjacent endpoints from one speaker in one bubble', () => {
+    const first = reduceTranscript(initialTranscriptState, {
+      type: 'result',
+      result: result([{ word: 'I', speaker: 0 }, { word: 'think', speaker: 0 }], true, true),
+      nowMs: 100,
+    });
+    const second = reduceTranscript(first, {
+      type: 'result',
+      result: result([{ word: 'this', speaker: 0 }, { word: 'works.', speaker: 0 }], true, true),
+      nowMs: 200,
+    });
+
+    expect(second.lines).toHaveLength(2);
+    expect(displayLines(second)).toMatchObject([
+      { speakerIndex: 0, text: 'I think this works.', previewText: '', timeMs: 100 },
+    ]);
+  });
+
+  it('starts a new bubble when the speaker changes', () => {
+    let state = initialTranscriptState;
+    for (const [speaker, word] of [[0, 'First.'], [1, 'Reply.'], [0, 'Again.']] as const) {
+      state = reduceTranscript(state, {
+        type: 'result',
+        result: result([{ word, speaker }], true, true),
+        nowMs: 100,
+      });
+    }
+
+    expect(displayLines(state).map(({ speakerIndex, text }) => ({ speakerIndex, text })))
+      .toEqual([
+        { speakerIndex: 0, text: 'First.' },
+        { speakerIndex: 1, text: 'Reply.' },
+        { speakerIndex: 0, text: 'Again.' },
+      ]);
+  });
+
+  it('adds interim speech to the current bubble without duplicating final words', () => {
+    const first = reduceTranscript(initialTranscriptState, {
+      type: 'result',
+      result: result([{ word: 'Hello.', speaker: 0 }], true, true),
+      nowMs: 100,
+    });
+    const interim = reduceTranscript(first, {
+      type: 'result',
+      result: result([{ word: 'More', speaker: 0 }], false),
+      nowMs: 200,
+    });
+    expect(displayLines(interim)).toMatchObject([
+      { speakerIndex: 0, text: 'Hello.', previewText: 'More' },
+    ]);
+
+    const final = reduceTranscript(interim, {
+      type: 'result',
+      result: result([{ word: 'More.', speaker: 0 }], true, true),
+      nowMs: 300,
+    });
+    expect(displayLines(final)).toMatchObject([
+      { speakerIndex: 0, text: 'Hello. More.', previewText: '' },
+    ]);
   });
 });

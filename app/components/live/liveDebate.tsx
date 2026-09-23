@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { previewLines, type TranscriptLine } from './transcript';
+import { useEffect, useRef, useState } from 'react';
+import { displayLines } from './transcript';
 import { useLiveTranscription, type LiveStatus } from './useLiveTranscription';
 
 const STATUS_TEXT: Record<LiveStatus, string> = {
@@ -33,22 +33,17 @@ function timeLabel(timeMs: number): string {
 
 export function LiveDebate() {
   const { transcript, status, error, start, stop, clear } = useLiveTranscription();
-  const previews = previewLines(transcript);
-  const speakers = useMemo(() => {
-    const indices = new Set<number>();
-    for (const line of transcript.lines) {
-      if (line.speakerIndex !== null) indices.add(line.speakerIndex);
-    }
-    for (const line of previews) {
-      if (line.speakerIndex !== null) indices.add(line.speakerIndex);
-    }
-    return [...indices].sort((a, b) => a - b);
-  }, [transcript, previews]);
+  const displayed = displayLines(transcript);
+  const speakerIndices = new Set<number>();
+  for (const line of displayed) {
+    if (line.speakerIndex !== null) speakerIndices.add(line.speakerIndex);
+  }
+  const speakers = [...speakerIndices].sort((a, b) => a - b);
   const scrollRef = useRef<HTMLDivElement>(null);
   const followRef = useRef(true);
   const [showLatest, setShowLatest] = useState(false);
 
-  const contentKey = `${transcript.lines.length}:${previews.map((line) => line.text).join('|')}`;
+  const contentKey = `${transcript.lines.length}:${displayed.at(-1)?.previewText ?? ''}`;
   useEffect(() => {
     if (followRef.current && scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -127,7 +122,7 @@ export function LiveDebate() {
                 <button
                   type="button"
                   onClick={clear}
-                  disabled={transcript.lines.length === 0 && previews.length === 0}
+                  disabled={displayed.length === 0}
                 >
                   Clear transcript
                 </button>
@@ -137,33 +132,35 @@ export function LiveDebate() {
             {error && <p className="live-error" role="alert">{error}</p>}
             <div className="live-scroll" ref={scrollRef} onScroll={updateFollow}>
               <ol className="live-messages" aria-live="polite">
-                {transcript.lines.length === 0 && previews.length === 0 && (
+                {displayed.length === 0 && (
                   <li className="transcript-empty">
                     <strong>{busy ? STATUS_TEXT[status] : 'The transcript is empty.'}</strong>
                     <span>Start recording and speak into the microphone.</span>
                   </li>
                 )}
-                {transcript.lines.map((line: TranscriptLine) => (
-                  <li key={line.id} className={messageClass(line.speakerIndex, speakers.length)}>
-                    <div className="message-meta">
-                      <strong>{speakerName(line.speakerIndex)}</strong>
-                      <time dateTime={new Date(line.timeMs).toISOString()}>
-                        {timeLabel(line.timeMs)}
-                      </time>
-                    </div>
-                    <div className="bubble">{line.text}</div>
-                  </li>
-                ))}
-                {previews.map((line, index) => (
+                {displayed.map((line) => (
                   <li
-                    key={`preview-${index}`}
-                    className={`${messageClass(line.speakerIndex, speakers.length)} message-preview`}
+                    key={line.id}
+                    className={`${messageClass(line.speakerIndex, speakers.length)}${line.text ? '' : ' message-preview'}`}
                   >
                     <div className="message-meta">
                       <strong>{speakerName(line.speakerIndex)}</strong>
-                      <span>Live</span>
+                      {line.previewText ? (
+                        <span>Live</span>
+                      ) : line.timeMs !== null ? (
+                        <time dateTime={new Date(line.timeMs).toISOString()}>
+                          {timeLabel(line.timeMs)}
+                        </time>
+                      ) : null}
                     </div>
-                    <div className="bubble">{line.text}</div>
+                    <div className="bubble">
+                      {line.text}
+                      {line.previewText && (
+                        <span className="bubble-preview">
+                          {line.text ? ' ' : ''}{line.previewText}
+                        </span>
+                      )}
+                    </div>
                   </li>
                 ))}
               </ol>

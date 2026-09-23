@@ -7,6 +7,14 @@ export type TranscriptLine = {
   timeMs: number;
 };
 
+export type DisplayLine = {
+  id: string;
+  speakerIndex: number | null;
+  text: string;
+  previewText: string;
+  timeMs: number | null;
+};
+
 type SpokenWord = {
   text: string;
   speakerIndex: number | null;
@@ -101,4 +109,39 @@ export function reduceTranscript(
 
 export function previewLines(state: TranscriptState) {
   return groupWords([...state.bufferedWords, ...state.interimWords]);
+}
+
+function joinText(first: string, second: string): string {
+  return first ? `${first} ${second}` : second;
+}
+
+export function displayLines(state: TranscriptState): DisplayLine[] {
+  const displayed: DisplayLine[] = [];
+
+  // A Deepgram endpoint is not necessarily a change of speaker.
+  for (const line of state.lines) {
+    const last = displayed.at(-1);
+    if (last?.speakerIndex === line.speakerIndex) {
+      last.text = joinText(last.text, line.text);
+    } else {
+      displayed.push({ ...line, previewText: '' });
+    }
+  }
+
+  for (const [index, preview] of previewLines(state).entries()) {
+    const last = displayed.at(-1);
+    if (last?.speakerIndex === preview.speakerIndex) {
+      last.previewText = joinText(last.previewText, preview.text);
+    } else {
+      displayed.push({
+        id: `preview-${index}`,
+        speakerIndex: preview.speakerIndex,
+        text: '',
+        previewText: preview.text,
+        timeMs: null,
+      });
+    }
+  }
+
+  return displayed;
 }
