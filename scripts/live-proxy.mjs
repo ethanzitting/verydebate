@@ -1,12 +1,15 @@
 import { createServer } from 'node:http';
 import { createClient, LiveTranscriptionEvents } from '@deepgram/sdk';
 import { WebSocketServer, WebSocket } from 'ws';
+import { createInterpretationModel } from './interpretation/model.mjs';
+import { createInterpretationSession } from './interpretation/session.mjs';
 
 const host = '127.0.0.1';
-const port = 3001;
+const appPort = Number(process.env.LIVE_APP_PORT || 3000);
+const port = Number(process.env.LIVE_RELAY_PORT || 3001);
 const allowedOrigins = new Set([
-  'http://localhost:3000',
-  'http://127.0.0.1:3000',
+  `http://localhost:${appPort}`,
+  `http://127.0.0.1:${appPort}`,
 ]);
 
 if (!process.env.DEEPGRAM_API_KEY) {
@@ -19,6 +22,7 @@ const server = createServer((_request, response) => {
   response.end();
 });
 const sockets = new WebSocketServer({ noServer: true, maxPayload: 1024 * 1024 });
+const interpretationModel = createInterpretationModel();
 
 function reject(socket, status, reason) {
   socket.write(`HTTP/1.1 ${status} ${reason}\r\nConnection: close\r\n\r\n`);
@@ -32,7 +36,7 @@ server.on('upgrade', async (request, socket, head) => {
   }
 
   try {
-    const response = await fetch('http://127.0.0.1:3000/api/auth', {
+    const response = await fetch(`http://127.0.0.1:${appPort}/api/auth`, {
       headers: { cookie: request.headers.cookie ?? '' },
       signal: AbortSignal.timeout(5000),
     });
@@ -68,14 +72,29 @@ sockets.on('connection', (browser) => {
     }
   }
 
-  deepgram.on(LiveTranscriptionEvents.Open, () => send({ type: 'Ready' }));
-  deepgram.on(LiveTranscriptionEvents.Transcript, (result) => send(result));
-  deepgram.on(LiveTranscriptionEvents.UtteranceEnd, (result) => send(result));
+  const interpretation = createInterpretationSession({ model: interpretationModel, send });
+
+  deepgram.on(LiveTranscriptionEvents.Open, () => {
+    send({ type: 'Ready' });
+    if (!interpretationModel) {
+      send({ type: 'InterpretationError', message: 'Add the Grok key to enable meaning cards.' });
+    }
+  });
+  deepgram.on(LiveTranscriptionEvents.Transcript, (result) => {
+    send(result);
+    interpretation.accept(result);
+  });
+  deepgram.on(LiveTranscriptionEvents.UtteranceEnd, (result) => {
+    send(result);
+    interpretation.endpoint();
+  });
   deepgram.on(LiveTranscriptionEvents.Error, () => {
     send({ type: 'Error', message: 'The Deepgram connection failed.' });
     browser.close(1011);
   });
-  deepgram.on(LiveTranscriptionEvents.Close, () => browser.close(1000));
+  deepgram.on(LiveTranscriptionEvents.Close, () => {
+    void interpretation.finish().finally(() => browser.close(1000));
+  });
 
   browser.on('message', (data, isBinary) => {
     if (isBinary) {
@@ -91,10 +110,11 @@ sockets.on('connection', (browser) => {
     }
     if (message.type === 'Finalize') deepgram.finalize();
     if (message.type === 'CloseStream') deepgram.requestClose();
+    if (message.type === 'ClearSession') interpretation.reset();
   });
 
-  browser.on('close', () => deepgram.disconnect());
-  browser.on('error', () => deepgram.disconnect());
+  browser.on('close', () => { interpretation.dispose(); deepgram.disconnect(); });
+  browser.on('error', () => { interpretation.dispose(); deepgram.disconnect(); });
 });
 
 server.listen(port, host, () => {

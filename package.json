@@ -12,13 +12,17 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
+    "@ai-sdk/valibot": "^3.0.47",
+    "@ai-sdk/xai": "^5.0.7",
     "@deepgram/sdk": "^4.5.1",
+    "ai": "^7.0.113",
     "lodash": "^4.17.21",
     "next": "15.5.3",
     "postcss": "^8.5.6",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "tailwind-merge": "^3.3.1",
+    "valibot": "^1.5.0",
     "ws": "^8.21.3"
   },
   "devDependencies": {

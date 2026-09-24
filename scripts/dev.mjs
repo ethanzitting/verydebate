@@ -1,8 +1,15 @@
 import { spawn } from 'node:child_process';
 
+const appPort = process.env.LIVE_APP_PORT || '3000';
+const relayPort = process.env.LIVE_RELAY_PORT || '3001';
+const nextEnv = { ...process.env };
+delete nextEnv.XAI_API_KEY;
+nextEnv.NEXT_PUBLIC_LIVE_RELAY_PORT = relayPort;
+
 const children = [
-  spawn('./node_modules/.bin/next', ['dev', '--turbopack', '--hostname', '127.0.0.1'], {
+  spawn('./node_modules/.bin/next', ['dev', '--turbopack', '--hostname', '127.0.0.1', '--port', appPort], {
     stdio: 'inherit',
+    env: nextEnv,
   }),
   spawn(process.execPath, ['scripts/live-proxy.mjs'], { stdio: 'inherit' }),
 ];

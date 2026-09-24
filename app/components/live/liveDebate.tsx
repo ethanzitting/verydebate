@@ -9,9 +9,16 @@ const STATUS_TEXT: Record<LiveStatus, string> = {
   requesting: 'Waiting for microphone',
   connecting: 'Connecting to transcript service',
   recording: 'Live transcript',
-  stopping: 'Finishing transcript',
+  stopping: 'Finishing transcript and interpretation',
   error: 'Needs attention',
 };
+
+const KIND_TEXT = {
+  claim: 'Claim',
+  question: 'Question',
+  report: 'Reported view',
+  concession: 'Concession',
+} as const;
 
 function speakerName(index: number | null): string {
   return index === null ? 'Speaker unknown' : `Speaker ${index + 1}`;
@@ -32,7 +39,7 @@ function timeLabel(timeMs: number): string {
 }
 
 export function LiveDebate() {
-  const { transcript, status, error, start, stop, clear } = useLiveTranscription();
+  const { transcript, interpretations, interpretationError, status, error, start, stop, clear } = useLiveTranscription();
   const displayed = displayLines(transcript);
   const speakerIndices = new Set<number>();
   for (const line of displayed) {
@@ -40,6 +47,7 @@ export function LiveDebate() {
   }
   const speakers = [...speakerIndices].sort((a, b) => a - b);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const meaningScrollRef = useRef<HTMLDivElement>(null);
   const followRef = useRef(true);
   const [showLatest, setShowLatest] = useState(false);
 
@@ -49,6 +57,13 @@ export function LiveDebate() {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [contentKey]);
+
+  const meaningKey = `${interpretations.length}:${interpretations.at(-1)?.revisedAt ?? 0}`;
+  useEffect(() => {
+    if (meaningScrollRef.current) {
+      meaningScrollRef.current.scrollTop = meaningScrollRef.current.scrollHeight;
+    }
+  }, [meaningKey]);
 
   const updateFollow = () => {
     const element = scrollRef.current;
@@ -96,12 +111,29 @@ export function LiveDebate() {
           <section className="meaning-stage" aria-label="Meaning stream">
             <div className="meaning-stage-heading">
               <h2>What they likely mean</h2>
-              <span>Meaning analysis comes later</span>
+              <span>Live interpretation · Not a quote</span>
             </div>
-            <div className="meaning-empty">
-              <span className="meaning-empty-rule" aria-hidden="true" />
-              <p>No interpretations yet.</p>
-              <span>The transcript below shows the speakers&apos; words.</span>
+            <div className="meaning-scroll" ref={meaningScrollRef}>
+              {interpretations.length === 0 ? (
+                <div className="meaning-empty">
+                  <span className="meaning-empty-rule" aria-hidden="true" />
+                  <p>{active ? 'Listening for a complete point.' : 'No interpretations yet.'}</p>
+                  <span>The transcript below shows the speakers&apos; words.</span>
+                </div>
+              ) : (
+                <ol className="meaning-cards" aria-live="polite">
+                  {interpretations.map((card, index) => (
+                    <li className={`meaning-card meaning-speaker-${card.speakerIndex % 4}`} key={card.id}>
+                      <div className="meaning-card-meta">
+                        <span>{index === interpretations.length - 1 ? 'Current thought' : 'Earlier point'}</span>
+                        <span>{speakerName(card.speakerIndex)} · {KIND_TEXT[card.kind]}</span>
+                      </div>
+                      <p>{card.text}</p>
+                    </li>
+                  ))}
+                </ol>
+              )}
+              {interpretationError && <p className="meaning-error" role="status">{interpretationError}</p>}
             </div>
           </section>
 
