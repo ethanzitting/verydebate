@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import type { LiveTranscriptionEvent } from '@deepgram/sdk';
+import * as v from 'valibot';
+import { interpretationMessageSchema } from '@/scripts/interpretation/schema.mjs';
 import {
   initialTranscriptState,
   reduceTranscript,
@@ -14,6 +16,8 @@ export type LiveStatus =
   | 'recording'
   | 'stopping'
   | 'error';
+
+export type InterpretationCard = v.InferOutput<typeof interpretationMessageSchema>['card'];
 
 type LiveSession = {
   stream: MediaStream;
@@ -42,6 +46,8 @@ export function useLiveTranscription() {
   );
   const [status, setStatus] = useState<LiveStatus>('idle');
   const [error, setError] = useState<string | null>(null);
+  const [interpretationError, setInterpretationError] = useState<string | null>(null);
+  const [interpretations, setInterpretations] = useState<InterpretationCard[]>([]);
   const statusRef = useRef<LiveStatus>('idle');
   const attemptRef = useRef(0);
   const sessionRef = useRef<LiveSession | null>(null);
@@ -95,7 +101,8 @@ export function useLiveTranscription() {
       setStage('connecting');
       const recorder = new MediaRecorder(stream);
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const connection = new WebSocket(`${protocol}//${window.location.hostname}:3001/live`);
+      const relayPort = process.env.NEXT_PUBLIC_LIVE_RELAY_PORT || '3001';
+      const connection = new WebSocket(`${protocol}//${window.location.hostname}:${relayPort}/live`);
 
       const session: LiveSession = {
         stream,
@@ -134,7 +141,7 @@ export function useLiveTranscription() {
             connection.send(JSON.stringify({ type: 'CloseStream' }));
             session.closeTimer = setTimeout(() => {
               if (!session.disposed) disposeSession(session, 'idle');
-            }, 3000);
+            }, 24000);
           }, 2000);
         }).catch(() => {
           disposeSession(session, 'error', 'The browser could not finish the audio stream.');
@@ -164,6 +171,19 @@ export function useLiveTranscription() {
           dispatch({ type: 'result', result: message as LiveTranscriptionEvent, nowMs: Date.now() });
         } else if (message.type === 'UtteranceEnd') {
           dispatch({ type: 'flush', nowMs: Date.now() });
+        } else if (message.type === 'InterpretationUpsert') {
+          const checked = v.safeParse(interpretationMessageSchema, message);
+          if (checked.success) {
+            const card = checked.output.card;
+            setInterpretations((current) => {
+              const index = current.findIndex((item) => item.id === card.id);
+              if (index < 0) return [...current, card];
+              return current.map((item) => item.id === card.id ? card : item);
+            });
+            setInterpretationError(null);
+          }
+        } else if (message.type === 'InterpretationError') {
+          setInterpretationError(message.message ?? 'The meaning service is not available.');
         } else if (message.type === 'Error') {
           disposeSession(session, 'error', message.message ?? 'The Deepgram connection failed.');
         }
@@ -224,10 +244,19 @@ export function useLiveTranscription() {
 
   return {
     transcript,
+    interpretations,
+    interpretationError,
     status,
     error,
     start,
     stop,
-    clear: () => dispatch({ type: 'clear' }),
+    clear: () => {
+      if (sessionRef.current?.connection.readyState === WebSocket.OPEN) {
+        sessionRef.current.connection.send(JSON.stringify({ type: 'ClearSession' }));
+      }
+      dispatch({ type: 'clear' });
+      setInterpretations([]);
+      setInterpretationError(null);
+    },
   };
 }

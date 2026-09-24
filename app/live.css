@@ -112,8 +112,8 @@ button:disabled { cursor: not-allowed; }
 }
 .meaning-stage {
   display: flex;
-  flex: 0 0 25%;
-  min-height: 145px;
+  flex: 0 0 36%;
+  min-height: 190px;
   flex-direction: column;
   color: #fff;
   background: var(--panel);
@@ -148,6 +148,55 @@ button:disabled { cursor: not-allowed; }
   gap: 8px;
   padding: 16px;
   text-align: center;
+}
+.meaning-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-color: #67818b transparent;
+}
+.meaning-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 18px clamp(20px, 3vw, 64px) 24px;
+  list-style: none;
+}
+.meaning-card {
+  padding: 12px 20px 15px;
+  border-left: 4px solid #68b5b3;
+  background: #183440;
+}
+.meaning-speaker-1 { border-color: #82a8e5; }
+.meaning-speaker-2 { border-color: #dc9a80; }
+.meaning-speaker-3 { border-color: #b8a5d7; }
+.meaning-card-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  color: #b5d1db;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .035em;
+  text-transform: uppercase;
+}
+.meaning-card:last-child .meaning-card-meta span:first-child { color: var(--gold); }
+.meaning-card p {
+  margin: 8px 0 0;
+  color: #f1f6f7;
+  font-size: clamp(16px, 1.35vw, 23px);
+  font-weight: 600;
+  line-height: 1.35;
+}
+.meaning-error {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 0 clamp(20px, 3vw, 64px) 13px;
+  color: #f4c1ae;
+  font-size: 13px;
 }
 .meaning-empty-rule {
   display: block;
@@ -324,12 +373,17 @@ button:disabled { cursor: not-allowed; }
   .live-status { font-size: 0; }
   .status-dot { width: 9px; height: 9px; }
   .record-button { min-width: 0; padding: 8px 9px; font-size: 12px; }
-  .meaning-stage { min-height: 125px; flex-basis: 21%; }
+  .meaning-stage { min-height: 175px; flex-basis: 34%; }
   .meaning-stage-heading { min-height: 43px; gap: 9px; padding: 0 15px; }
   .meaning-stage-heading h2 { font-size: 17px; }
   .meaning-stage-heading span { font-size: 11px; }
   .meaning-empty p { font-size: 18px; }
   .meaning-empty > span:last-child { font-size: 11px; }
+  .meaning-cards { gap: 9px; padding: 12px 15px 16px; }
+  .meaning-card { padding: 10px 12px 12px; }
+  .meaning-card-meta { flex-wrap: wrap; gap: 3px 12px; font-size: 10px; }
+  .meaning-card p { font-size: 16px; }
+  .meaning-error { padding: 0 15px 12px; }
   .live-transcript-heading { min-height: 55px; gap: 8px; padding: 0 15px; }
   .live-transcript-heading > div { gap: 8px; }
   .live-transcript-heading h2 { font-size: 17px; }
