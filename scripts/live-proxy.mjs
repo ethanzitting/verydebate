@@ -25,23 +25,9 @@ function reject(socket, status, reason) {
   socket.destroy();
 }
 
-server.on('upgrade', async (request, socket, head) => {
+server.on('upgrade', (request, socket, head) => {
   if (request.url !== '/live' || !allowedOrigins.has(request.headers.origin)) {
     reject(socket, 403, 'Forbidden');
-    return;
-  }
-
-  try {
-    const response = await fetch('http://127.0.0.1:3000/api/auth', {
-      headers: { cookie: request.headers.cookie ?? '' },
-      signal: AbortSignal.timeout(5000),
-    });
-    if (!response.ok || !(await response.json()).authenticated) {
-      reject(socket, 401, 'Unauthorized');
-      return;
-    }
-  } catch {
-    reject(socket, 503, 'Service Unavailable');
     return;
   }
 

@@ -6,23 +6,19 @@ The meaning area stays empty. The app does not generate meanings or check claims
 
 ## Run locally
 
-Create `.env.local` with the shared password:
-
-```text
-DEBATE_PASSWORD=your-shared-password
-```
-
 Copy `.env.1password.example` to the ignored `.env.1password` file.
 Replace the example reference with the Deepgram API key field from 1Password.
 Install the 1Password CLI and enable its desktop app integration.
 Start the app with `npm ci` and `npm run dev`.
 The `op run` command reads the key from 1Password for the local relay.
 Run `npm run check:deepgram` to confirm that the key can open a live stream.
-Open `http://localhost:3000`, enter the shared password, and select **Start recording**.
+Open `http://localhost:3000` and select **Start recording**.
 Allow microphone access when the browser asks.
 
 The browser sends microphone audio to a local WebSocket relay on port 3001.
-The relay checks the password session and sends the audio to Deepgram.
+The relay accepts the local page and sends the audio to Deepgram.
+The app has no password gate. Both development servers listen on loopback only.
+The production command also listens on loopback until the app has a public access design.
 The browser never receives the long-lived API key.
 Deepgram assigns a numeric speaker ID to each word.
 The transcript joins adjacent segments from the same speaker into one bubble.
