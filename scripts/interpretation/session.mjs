@@ -113,9 +113,9 @@ export function createInterpretationSession({ model, send, now = Date.now, delay
 
   return {
     accept(result) {
-      if (closed || !result?.is_final) return;
+      if (closed || !result?.is_final) return [];
       const next = segmentsFromResult(result, () => `segment-${++nextSegment}`);
-      if (next.length === 0) return;
+      if (next.length === 0) return [];
       segments.push(...next);
       if (segments.length > 120) {
         const excess = segments.length - 120;
@@ -123,6 +123,7 @@ export function createInterpretationSession({ model, send, now = Date.now, delay
         analyzedCount = Math.max(0, analyzedCount - excess);
       }
       schedule(Boolean(result.speech_final));
+      return next.map(({ id, speakerIndex, text }) => ({ id, speakerIndex, text }));
     },
     endpoint() { if (!closed) schedule(true); },
     reset() {

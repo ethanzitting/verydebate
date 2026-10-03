@@ -14,6 +14,7 @@ The `op run` command reads the keys from 1Password for the local relay.
 Run `npm run check:deepgram` to confirm that the key can open a live stream.
 Open `http://localhost:3000` and select **Start recording**.
 Allow microphone access when the browser asks.
+Use the Science demo and Abortion demo buttons to open the recorded conversations.
 
 The browser sends microphone audio to a local WebSocket relay on port 3001.
 The relay accepts the local page and sends the audio to Deepgram.
@@ -26,6 +27,8 @@ A speaker change starts a new bubble. Live words appear in the current bubble.
 The relay sends final transcript segments to Grok after a short interval or a complete point.
 The model can create a card, revise the same point, or return no card.
 Valibot checks every model result. The relay also checks speaker IDs and transcript sources.
+Select a meaning card to show only its source transcript.
+Select the transcript strip to open or close it. Drag the strip to change its height.
 The app shows a service message if the Grok key is absent. The transcript still works.
 
 The transcript and cards stay in memory during this visit. A page reload clears them.
@@ -49,3 +52,4 @@ Set `LIVE_APP_PORT` and `LIVE_RELAY_PORT` to run a separate local preview.
 
 The `concepts/` directory keeps the recorded debate interface.
 See [DEMO.md](DEMO.md) for its replay instructions and limits.
+The app serves these files at `/demos/` and links to both recorded conversations.

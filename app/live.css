@@ -45,6 +45,7 @@ button:disabled { cursor: not-allowed; }
 .live-brand,
 .live-actions,
 .live-status,
+.live-demo-nav,
 .live-transcript-heading,
 .live-transcript-heading > div,
 .transcript-actions {
@@ -53,6 +54,7 @@ button:disabled { cursor: not-allowed; }
 }
 
 .live-brand { gap: clamp(18px, 2vw, 34px); }
+.live-brand { flex: none; }
 .live-brand-mark {
   font-size: clamp(17px, 1.25vw, 23px);
   font-weight: 800;
@@ -67,7 +69,30 @@ button:disabled { cursor: not-allowed; }
   letter-spacing: -.025em;
   white-space: nowrap;
 }
+.live-demo-nav {
+  justify-content: center;
+  gap: 3px;
+  padding: 3px;
+  border: 1px solid #506976;
+  border-radius: 6px;
+  background: #06141d;
+}
+.live-demo-nav a {
+  padding: 7px 11px;
+  border-radius: 4px;
+  color: #c7d8df;
+  font-size: clamp(11px, .8vw, 15px);
+  font-weight: 800;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.live-demo-nav a:hover,
+.live-demo-nav a:focus-visible { background: #243c48; color: #fff; }
+.live-demo-nav a:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.live-demo-nav a.is-current { background: var(--gold); color: #172b36; }
 .live-actions { gap: clamp(16px, 2vw, 30px); }
+.live-actions { flex: none; }
 .live-status {
   gap: 10px;
   color: #d2e1e8;
@@ -112,8 +137,8 @@ button:disabled { cursor: not-allowed; }
 }
 .meaning-stage {
   display: flex;
-  flex: 0 0 36%;
-  min-height: 190px;
+  flex: 1 1 auto;
+  min-height: 0;
   flex-direction: column;
   color: #fff;
   background: var(--panel);
@@ -165,14 +190,30 @@ button:disabled { cursor: not-allowed; }
   padding: 18px clamp(20px, 3vw, 64px) 24px;
   list-style: none;
 }
+.meaning-cards > li { width: 100%; }
 .meaning-card {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: stretch;
   padding: 12px 20px 15px;
+  border: 0;
   border-left: 4px solid #68b5b3;
   background: #183440;
+  color: inherit;
+  font: inherit;
+  text-align: left;
 }
 .meaning-speaker-1 { border-color: #82a8e5; }
 .meaning-speaker-2 { border-color: #dc9a80; }
 .meaning-speaker-3 { border-color: #b8a5d7; }
+.meaning-card:hover { background: #214553; }
+.meaning-card:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+.meaning-card.is-selected {
+  border-left-color: var(--gold);
+  background: #254956;
+  box-shadow: inset 0 0 0 2px var(--gold);
+}
 .meaning-card-meta {
   display: flex;
   justify-content: space-between;
@@ -183,14 +224,22 @@ button:disabled { cursor: not-allowed; }
   letter-spacing: .035em;
   text-transform: uppercase;
 }
-.meaning-card:last-child .meaning-card-meta span:first-child { color: var(--gold); }
-.meaning-card p {
+.meaning-cards > li:last-child .meaning-card-meta span:first-child { color: var(--gold); }
+.meaning-card-text {
+  display: block;
   margin: 8px 0 0;
   color: #f1f6f7;
   font-size: clamp(16px, 1.35vw, 23px);
   font-weight: 600;
   line-height: 1.35;
 }
+.meaning-card-source {
+  margin-top: 10px;
+  color: #bad2dc;
+  font-size: 12px;
+  font-weight: 800;
+}
+.meaning-card.is-selected .meaning-card-source { color: #ffe59a; }
 .meaning-error {
   max-width: 1160px;
   margin: 0 auto;
@@ -219,12 +268,35 @@ button:disabled { cursor: not-allowed; }
 
 .live-transcript {
   display: flex;
-  flex: 1;
+  flex: 0 0 var(--transcript-height, 82px);
   min-height: 0;
   flex-direction: column;
   border-top: 3px solid var(--gold);
   background: var(--paper);
 }
+.live-transcript-grip {
+  display: flex;
+  flex: 0 0 17px;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: #d8e4e8;
+  touch-action: none;
+  cursor: ns-resize;
+}
+.live-transcript-grip span {
+  width: 78px;
+  height: 4px;
+  border-radius: 5px;
+  background: #52727e;
+}
+.live-transcript-grip:hover,
+.live-transcript-grip:focus-visible { background: #c4d8df; }
+.live-transcript-grip:focus-visible { outline: 3px solid #315663; outline-offset: -3px; }
+.live-transcript.is-collapsed .live-scroll,
+.live-transcript.is-collapsed .live-error { display: none; }
 .live-transcript-heading {
   justify-content: space-between;
   gap: 24px;
@@ -365,15 +437,17 @@ button:disabled { cursor: not-allowed; }
 }
 
 @media (max-width: 700px) {
-  .live-header { min-height: 62px; gap: 8px; padding: 0 15px; }
+  .live-header { min-height: 62px; flex-wrap: wrap; gap: 7px 8px; padding: 8px 15px; }
   .live-brand { gap: 7px; }
   .live-brand-mark { display: none; }
   .live-brand h1 { font-size: 21px; }
   .live-actions { gap: 8px; }
+  .live-demo-nav { order: 3; width: 100%; }
+  .live-demo-nav a { flex: 1; padding: 7px 5px; text-align: center; }
   .live-status { font-size: 0; }
   .status-dot { width: 9px; height: 9px; }
   .record-button { min-width: 0; padding: 8px 9px; font-size: 12px; }
-  .meaning-stage { min-height: 175px; flex-basis: 34%; }
+  .meaning-stage { min-height: 0; }
   .meaning-stage-heading { min-height: 43px; gap: 9px; padding: 0 15px; }
   .meaning-stage-heading h2 { font-size: 17px; }
   .meaning-stage-heading span { font-size: 11px; }
@@ -382,7 +456,8 @@ button:disabled { cursor: not-allowed; }
   .meaning-cards { gap: 9px; padding: 12px 15px 16px; }
   .meaning-card { padding: 10px 12px 12px; }
   .meaning-card-meta { flex-wrap: wrap; gap: 3px 12px; font-size: 10px; }
-  .meaning-card p { font-size: 16px; }
+  .meaning-card-text { font-size: 16px; }
+  .meaning-card-source { font-size: 10px; }
   .meaning-error { padding: 0 15px 12px; }
   .live-transcript-heading { min-height: 55px; gap: 8px; padding: 0 15px; }
   .live-transcript-heading > div { gap: 8px; }

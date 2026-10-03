@@ -5,6 +5,7 @@ export type TranscriptLine = {
   speakerIndex: number | null;
   text: string;
   timeMs: number;
+  sourceIds: string[];
 };
 
 export type DisplayLine = {
@@ -13,11 +14,23 @@ export type DisplayLine = {
   text: string;
   previewText: string;
   timeMs: number | null;
+  sourceIds: string[];
 };
 
 type SpokenWord = {
   text: string;
   speakerIndex: number | null;
+  sourceIds: string[];
+};
+
+export type TranscriptSourceSegment = {
+  id: string;
+  speakerIndex: number | null;
+  text: string;
+};
+
+export type LiveTranscriptResult = LiveTranscriptionEvent & {
+  source_segments?: TranscriptSourceSegment[];
 };
 
 export type TranscriptState = {
@@ -27,7 +40,7 @@ export type TranscriptState = {
 };
 
 export type TranscriptAction =
-  | { type: 'result'; result: LiveTranscriptionEvent; nowMs: number }
+  | { type: 'result'; result: LiveTranscriptResult; nowMs: number }
   | { type: 'flush'; nowMs: number }
   | { type: 'clear' };
 
@@ -37,7 +50,15 @@ export const initialTranscriptState: TranscriptState = {
   interimWords: [],
 };
 
-function wordsFromResult(result: LiveTranscriptionEvent): SpokenWord[] {
+function wordsFromResult(result: LiveTranscriptResult): SpokenWord[] {
+  if (result.is_final && result.source_segments?.length) {
+    return result.source_segments.map((segment) => ({
+      text: segment.text,
+      speakerIndex: segment.speakerIndex,
+      sourceIds: [segment.id],
+    }));
+  }
+
   const alternative = result.channel?.alternatives?.[0];
   if (!alternative) return [];
 
@@ -46,25 +67,32 @@ function wordsFromResult(result: LiveTranscriptionEvent): SpokenWord[] {
       .map((word) => ({
         text: (word.punctuated_word || word.word).trim(),
         speakerIndex: word.speaker ?? null,
+        sourceIds: [],
       }))
       .filter((word) => word.text.length > 0);
   }
 
   const text = alternative.transcript?.trim();
-  return text ? [{ text, speakerIndex: null }] : [];
+  return text ? [{ text, speakerIndex: null, sourceIds: [] }] : [];
 }
 
 function groupWords(words: SpokenWord[]): Array<{
   speakerIndex: number | null;
   text: string;
+  sourceIds: string[];
 }> {
-  const groups: Array<{ speakerIndex: number | null; text: string }> = [];
+  const groups: Array<{ speakerIndex: number | null; text: string; sourceIds: string[] }> = [];
   for (const word of words) {
     const last = groups.at(-1);
     if (last?.speakerIndex === word.speakerIndex) {
       last.text += ` ${word.text}`;
+      last.sourceIds = [...new Set([...last.sourceIds, ...word.sourceIds])];
     } else {
-      groups.push({ speakerIndex: word.speakerIndex, text: word.text });
+      groups.push({
+        speakerIndex: word.speakerIndex,
+        text: word.text,
+        sourceIds: word.sourceIds,
+      });
     }
   }
   return groups;
@@ -108,7 +136,8 @@ export function reduceTranscript(
 }
 
 export function previewLines(state: TranscriptState) {
-  return groupWords([...state.bufferedWords, ...state.interimWords]);
+  return groupWords([...state.bufferedWords, ...state.interimWords])
+    .map(({ speakerIndex, text }) => ({ speakerIndex, text }));
 }
 
 function joinText(first: string, second: string): string {
@@ -123,6 +152,7 @@ export function displayLines(state: TranscriptState): DisplayLine[] {
     const last = displayed.at(-1);
     if (last?.speakerIndex === line.speakerIndex) {
       last.text = joinText(last.text, line.text);
+      last.sourceIds = [...new Set([...last.sourceIds, ...line.sourceIds])];
     } else {
       displayed.push({ ...line, previewText: '' });
     }
@@ -139,6 +169,7 @@ export function displayLines(state: TranscriptState): DisplayLine[] {
         text: '',
         previewText: preview.text,
         timeMs: null,
+        sourceIds: [],
       });
     }
   }

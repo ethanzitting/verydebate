@@ -67,8 +67,10 @@ sockets.on('connection', (browser) => {
     }
   });
   deepgram.on(LiveTranscriptionEvents.Transcript, (result) => {
-    send(result);
-    interpretation.accept(result);
+    const sourceSegments = interpretation.accept(result);
+    send(sourceSegments.length > 0
+      ? { ...result, source_segments: sourceSegments }
+      : result);
   });
   deepgram.on(LiveTranscriptionEvents.UtteranceEnd, (result) => {
     send(result);

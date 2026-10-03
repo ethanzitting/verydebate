@@ -151,4 +151,26 @@ describe('live transcript', () => {
       { speakerIndex: 0, text: 'Hello. More.', previewText: '' },
     ]);
   });
+
+  it('keeps relay source IDs when it groups transcript bubbles', () => {
+    const firstResult = result([{ word: 'First.', speaker: 0 }], true, true) as LiveTranscriptionEvent & {
+      source_segments: Array<{ id: string; speakerIndex: number; text: string }>;
+    };
+    firstResult.source_segments = [{ id: 'segment-1', speakerIndex: 0, text: 'First.' }];
+    const secondResult = result([{ word: 'Second.', speaker: 0 }], true, true) as LiveTranscriptionEvent & {
+      source_segments: Array<{ id: string; speakerIndex: number; text: string }>;
+    };
+    secondResult.source_segments = [{ id: 'segment-2', speakerIndex: 0, text: 'Second.' }];
+
+    const first = reduceTranscript(initialTranscriptState, {
+      type: 'result', result: firstResult, nowMs: 100,
+    });
+    const second = reduceTranscript(first, {
+      type: 'result', result: secondResult, nowMs: 200,
+    });
+
+    expect(displayLines(second)).toMatchObject([
+      { text: 'First. Second.', sourceIds: ['segment-1', 'segment-2'] },
+    ]);
+  });
 });

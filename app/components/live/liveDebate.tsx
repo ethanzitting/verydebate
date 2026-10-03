@@ -1,6 +1,8 @@
 'use client';
 
+import type { CSSProperties, KeyboardEvent, PointerEvent as ReactPointerEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { displayLines } from './transcript';
 import { useLiveTranscription, type LiveStatus } from './useLiveTranscription';
 
@@ -40,16 +42,31 @@ function timeLabel(timeMs: number): string {
 
 export function LiveDebate() {
   const { transcript, interpretations, interpretationError, status, error, start, stop, clear } = useLiveTranscription();
-  const displayed = displayLines(transcript);
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+  const selectedCard = interpretations.find((card) => card.id === selectedCardId) ?? null;
+  const allDisplayed = displayLines(transcript);
+  const selectedSources = new Set(selectedCard?.sourceIds ?? []);
+  const displayed = selectedCard
+    ? displayLines({
+        ...transcript,
+        lines: transcript.lines.filter((line) => line.sourceIds.some((id) => selectedSources.has(id))),
+        bufferedWords: [],
+        interimWords: [],
+      })
+    : allDisplayed;
   const speakerIndices = new Set<number>();
-  for (const line of displayed) {
+  for (const line of allDisplayed) {
     if (line.speakerIndex !== null) speakerIndices.add(line.speakerIndex);
   }
   const speakers = [...speakerIndices].sort((a, b) => a - b);
   const scrollRef = useRef<HTMLDivElement>(null);
   const meaningScrollRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
   const followRef = useRef(true);
+  const dragRef = useRef<{ startY: number; startHeight: number; moved: boolean } | null>(null);
+  const ignoreGripClickRef = useRef(false);
   const [showLatest, setShowLatest] = useState(false);
+  const [transcriptHeight, setTranscriptHeight] = useState(82);
 
   const contentKey = `${transcript.lines.length}:${displayed.at(-1)?.previewText ?? ''}`;
   useEffect(() => {
@@ -65,6 +82,12 @@ export function LiveDebate() {
     }
   }, [meaningKey]);
 
+  useEffect(() => {
+    if (selectedCardId && !interpretations.some((card) => card.id === selectedCardId)) {
+      setSelectedCardId(null);
+    }
+  }, [interpretations, selectedCardId]);
+
   const updateFollow = () => {
     const element = scrollRef.current;
     if (!element) return;
@@ -79,6 +102,56 @@ export function LiveDebate() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   };
 
+  const maximumTranscriptHeight = () => Math.max(220, (bodyRef.current?.clientHeight ?? 600) * 0.78);
+  const changeTranscriptHeight = (height: number) => {
+    const next = Math.max(82, Math.min(Math.round(height), maximumTranscriptHeight()));
+    setTranscriptHeight(next <= 116 ? 82 : next);
+  };
+  const openTranscript = () => {
+    const bodyHeight = bodyRef.current?.clientHeight ?? 600;
+    changeTranscriptHeight(Math.max(260, bodyHeight * 0.42));
+  };
+  const toggleTranscript = () => {
+    if (transcriptHeight > 116) setTranscriptHeight(82);
+    else openTranscript();
+  };
+  const handleGripPointerDown = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    dragRef.current = { startY: event.clientY, startHeight: transcriptHeight, moved: false };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+  const handleGripPointerMove = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    const drag = dragRef.current;
+    if (!drag) return;
+    const distance = drag.startY - event.clientY;
+    if (Math.abs(distance) > 4) drag.moved = true;
+    if (drag.moved) changeTranscriptHeight(drag.startHeight + distance);
+  };
+  const handleGripPointerEnd = () => {
+    ignoreGripClickRef.current = Boolean(dragRef.current?.moved);
+    dragRef.current = null;
+  };
+  const handleGripClick = () => {
+    if (ignoreGripClickRef.current) {
+      ignoreGripClickRef.current = false;
+      return;
+    }
+    toggleTranscript();
+  };
+  const handleGripKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+    if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
+    event.preventDefault();
+    changeTranscriptHeight(transcriptHeight + (event.key === 'ArrowUp' ? 80 : -80));
+  };
+  const selectMeaning = (cardId: string) => {
+    const willSelect = selectedCardId !== cardId;
+    setSelectedCardId(willSelect ? cardId : null);
+    if (willSelect && transcriptHeight <= 116) openTranscript();
+  };
+  const clearTranscript = () => {
+    setSelectedCardId(null);
+    clear();
+  };
+
   const active = status === 'recording';
   const busy = status === 'requesting' || status === 'connecting' || status === 'stopping';
   const canStop = active || status === 'requesting' || status === 'connecting';
@@ -91,6 +164,11 @@ export function LiveDebate() {
             <span className="live-brand-mark">verydebate<span>.</span></span>
             <h1>Live debate</h1>
           </div>
+          <nav className="live-demo-nav" aria-label="Conversation mode">
+            <Link className="is-current" href="/" aria-current="page">Live</Link>
+            <a href="/demos/live-stage.html?debate=science">Science demo</a>
+            <a href="/demos/live-stage.html?debate=abortion">Abortion demo</a>
+          </nav>
           <div className="live-actions">
             <span className="live-status" role="status">
               <i className={active ? 'status-dot is-live' : 'status-dot'} aria-hidden="true" />
@@ -107,7 +185,7 @@ export function LiveDebate() {
           </div>
         </header>
 
-        <div className="live-body">
+        <div className="live-body" ref={bodyRef}>
           <section className="meaning-stage" aria-label="Meaning stream">
             <div className="meaning-stage-heading">
               <h2>What they likely mean</h2>
@@ -123,12 +201,22 @@ export function LiveDebate() {
               ) : (
                 <ol className="meaning-cards" aria-live="polite">
                   {interpretations.map((card, index) => (
-                    <li className={`meaning-card meaning-speaker-${card.speakerIndex % 4}`} key={card.id}>
-                      <div className="meaning-card-meta">
-                        <span>{index === interpretations.length - 1 ? 'Current thought' : 'Earlier point'}</span>
-                        <span>{speakerName(card.speakerIndex)} · {KIND_TEXT[card.kind]}</span>
-                      </div>
-                      <p>{card.text}</p>
+                    <li key={card.id}>
+                      <button
+                        type="button"
+                        className={`meaning-card meaning-speaker-${card.speakerIndex % 4}${selectedCardId === card.id ? ' is-selected' : ''}`}
+                        aria-pressed={selectedCardId === card.id}
+                        onClick={() => selectMeaning(card.id)}
+                      >
+                        <span className="meaning-card-meta">
+                          <span>{index === interpretations.length - 1 ? 'Current thought' : 'Earlier point'}</span>
+                          <span>{speakerName(card.speakerIndex)} · {KIND_TEXT[card.kind]}</span>
+                        </span>
+                        <span className="meaning-card-text">{card.text}</span>
+                        <span className="meaning-card-source">
+                          {selectedCardId === card.id ? 'Showing source transcript' : 'Show source transcript'}
+                        </span>
+                      </button>
                     </li>
                   ))}
                 </ol>
@@ -137,24 +225,47 @@ export function LiveDebate() {
             </div>
           </section>
 
-          <section className="live-transcript" aria-label="Live transcript">
+          <section
+            className={`live-transcript${transcriptHeight <= 116 ? ' is-collapsed' : ''}${selectedCard ? ' has-filter' : ''}`}
+            aria-label="Live transcript"
+            style={{ '--transcript-height': `${transcriptHeight}px` } as CSSProperties}
+          >
+            <button
+              type="button"
+              className="live-transcript-grip"
+              aria-expanded={transcriptHeight > 116}
+              aria-label={transcriptHeight > 116 ? 'Drag down or select to close the transcript' : 'Drag up or select to open the transcript'}
+              onPointerDown={handleGripPointerDown}
+              onPointerMove={handleGripPointerMove}
+              onPointerUp={handleGripPointerEnd}
+              onPointerCancel={handleGripPointerEnd}
+              onClick={handleGripClick}
+              onKeyDown={handleGripKeyDown}
+            >
+              <span aria-hidden="true" />
+            </button>
             <div className="live-transcript-heading">
               <div>
                 <h2>Transcript</h2>
                 <span>
-                  {speakers.length > 0
+                  {selectedCard
+                    ? `Speech behind ${speakerName(selectedCard.speakerIndex)}’s meaning`
+                    : speakers.length > 0
                     ? `${speakers.length} ${speakers.length === 1 ? 'speaker' : 'speakers'} detected`
                     : 'Automatic speech transcript'}
                 </span>
               </div>
               <div className="transcript-actions">
+                {selectedCard && (
+                  <button type="button" onClick={() => setSelectedCardId(null)}>Show all speech</button>
+                )}
                 {showLatest && (
                   <button type="button" onClick={returnToLatest}>Return to latest</button>
                 )}
                 <button
                   type="button"
-                  onClick={clear}
-                  disabled={displayed.length === 0}
+                  onClick={clearTranscript}
+                  disabled={allDisplayed.length === 0}
                 >
                   Clear transcript
                 </button>
@@ -166,8 +277,8 @@ export function LiveDebate() {
               <ol className="live-messages" aria-live="polite">
                 {displayed.length === 0 && (
                   <li className="transcript-empty">
-                    <strong>{busy ? STATUS_TEXT[status] : 'The transcript is empty.'}</strong>
-                    <span>Start recording and speak into the microphone.</span>
+                    <strong>{selectedCard ? 'No linked transcript is available.' : busy ? STATUS_TEXT[status] : 'The transcript is empty.'}</strong>
+                    <span>{selectedCard ? 'Show all speech, or select another meaning.' : 'Start recording and speak into the microphone.'}</span>
                   </li>
                 )}
                 {displayed.map((line) => (

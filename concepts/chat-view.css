@@ -36,6 +36,7 @@ h1, h2, h3, p { margin: 0; }
 .brand { font-size: 20px; font-weight: 800; letter-spacing: -.045em; white-space: nowrap; }
 .brand-stop { color: var(--maya-ink); }
 .header-note { color: #99a7b3; font-size: 11px; margin-left: auto; }
+.header-links { display: flex; align-items: center; gap: 16px; }
 .all-views { color: #476475; font-size: 12px; font-weight: 700; white-space: nowrap; }
 .all-views:hover { color: var(--maya-ink); }
 .page-shell { max-width: 1190px; margin: auto; padding: 18px 24px 12px; }
