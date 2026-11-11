@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import './live.css';
-import { ProviderPyramid } from '@/app/components/providerPyramid';
 import { ReactNode } from 'react';
 
 export const metadata: Metadata = {
@@ -20,7 +19,7 @@ export default function RootLayout({
         <title>Very Debate</title>
       </head>
       <body className="antialiased h-full w-full">
-        <ProviderPyramid>{children}</ProviderPyramid>
+        {children}
       </body>
     </html>
   );
